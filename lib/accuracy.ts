@@ -2,8 +2,8 @@
 // golden (correct) sheet. Rows are aligned by SKU.
 
 import { NormalizedTable, ProductResult, AccuracyReport } from "./types";
-import { findSkuColumn } from "./parseWorkbook";
-import { normalizeHeader, SCHEMA_NAME_INDEX, HEADER_SYNONYMS } from "./referenceData";
+import { findSkuColumn } from "../parseWorkbook";
+import { normalizeHeader, SCHEMA_NAME_INDEX, HEADER_SYNONYMS } from "../referenceData";
 
 function valEq(a: any, b: any): boolean {
   return String(a ?? "").trim().toLowerCase() === String(b ?? "").trim().toLowerCase();

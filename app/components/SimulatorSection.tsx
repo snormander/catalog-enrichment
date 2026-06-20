@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import FileDrop from "./FileDrop";
-import { normalizeWorkbook, tableToXlsxBlob } from "@/lib/parseWorkbook";
-import { simulateIncorrect, SimResult } from "@/lib/simulate";
-import { NormalizedTable } from "@/lib/types";
+import { normalizeWorkbook, tableToXlsxBlob } from "@/lib/lib2/parseWorkbook";
+import { simulateIncorrect, SimResult } from "@/lib/lib2/simulate";
+import { NormalizedTable } from "@/lib/lib2/types";
 
 export default function SimulatorSection() {
   const [fileName, setFileName] = useState<string | null>(null);

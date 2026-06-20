@@ -9,7 +9,7 @@ import {
   SCHEMA_NAME_INDEX,
   HEADER_SYNONYMS,
   SKU_HEADER_KEYS,
-} from "./referenceData";
+} from "../referenceData";
 
 // Read a File into a 2D array of raw cell values.
 export async function readSheetMatrix(file: File): Promise<any[][]> {

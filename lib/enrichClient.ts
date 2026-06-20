@@ -9,8 +9,8 @@ import {
   TokenUsage,
   FieldStatus,
 } from "./types";
-import { MDD, isLovValid, labelFor, VISUAL_ATTR_IDS } from "./referenceData";
-import { findSkuColumn, findImageColumns } from "./parseWorkbook";
+import { MDD, isLovValid, labelFor, VISUAL_ATTR_IDS } from "../referenceData";
+import { findSkuColumn, findImageColumns } from "../parseWorkbook";
 
 // Decide the status of one cell.
 function classify(attrId: string, value: any): FieldStatus {

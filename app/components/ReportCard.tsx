@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
-import { RunReport } from "@/lib/types";
-import { labelFor } from "@/lib/referenceData";
+import { RunReport } from "@/lib/lib2/types";
+import { labelFor } from "@/lib/lib2/referenceData";
 
 export default function ReportCard({ report }: { report: RunReport }) {
   const acc = report.accuracy;
