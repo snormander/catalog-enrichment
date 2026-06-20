@@ -1,0 +1,653 @@
+[
+ {
+  "index": 0,
+  "name": "S_OR_D",
+  "mandatory": true,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 1,
+  "name": "HSN CODE",
+  "mandatory": true,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 2,
+  "name": "Seller Article SKU",
+  "mandatory": true,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 3,
+  "name": "PRODUCT TITLE",
+  "mandatory": true,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 4,
+  "name": "PRODUCT NAME",
+  "mandatory": true,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 5,
+  "name": "PRODUCT DESCRIPTION",
+  "mandatory": true,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 6,
+  "name": "PRODUCT MINIDESCRIPTION",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 7,
+  "name": "PRODUCT METATITLE",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 8,
+  "name": "PRODUCT METAKEYWORD",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 9,
+  "name": "PRODUCT METADESCRIPTION",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 10,
+  "name": "PRODUCT TAGS",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 11,
+  "name": "GLOBAL_IDENTIFIER_TYPE",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 12,
+  "name": "GLOBAL_IDENTIFIER_VALUE",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 13,
+  "name": "GLOBAL_IDENTIFIER_TYPE_2",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 14,
+  "name": "GLOBAL_IDENTIFIER_VALUE_2",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 15,
+  "name": "GLOBAL_IDENTIFIER_TYPE_3",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 16,
+  "name": "GLOBAL_IDENTIFIER_VALUE_3",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 17,
+  "name": "PRODUCT STARTDATE",
+  "mandatory": true,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 18,
+  "name": "PRODUCT ENDDATE",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 19,
+  "name": "PRODUCT REVIEW",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 20,
+  "name": "PRODUCT IMAGES",
+  "mandatory": true,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 21,
+  "name": "IMAGE PRIORITY",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 22,
+  "name": "PRODUCT VIDEO URL",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 23,
+  "name": "COUNTRY OF MANUFACTURER",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 24,
+  "name": "PRODUCT LENGTH [cm]",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 25,
+  "name": "PRODUCT WIDTH [cm]",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 26,
+  "name": "PRODUCT HEIGHT [cm]",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 27,
+  "name": "PRODUCT WEIGHT [gm]",
+  "mandatory": true,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 28,
+  "name": "Up Sell - Associated Products",
+  "mandatory": false,
+  "attrId": "upSellAssociatedProducts",
+  "isLov": true
+ },
+ {
+  "index": 29,
+  "name": "Fabric Family (Refer LOV List)",
+  "mandatory": true,
+  "attrId": "womenfabric",
+  "isLov": true
+ },
+ {
+  "index": 30,
+  "name": "Generic Name",
+  "mandatory": true,
+  "attrId": "genericName",
+  "isLov": true
+ },
+ {
+  "index": 31,
+  "name": "Style Note",
+  "mandatory": true,
+  "attrId": "stylenote",
+  "isLov": true
+ },
+ {
+  "index": 32,
+  "name": "Sleeve",
+  "mandatory": true,
+  "attrId": "womencasualtopwearsleeve",
+  "isLov": true
+ },
+ {
+  "index": 33,
+  "name": "Cross Sell - Associated Product Status (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "crossSellAssociatedProductStatus",
+  "isLov": true
+ },
+ {
+  "index": 34,
+  "name": "Age Band (Refer LOV List)",
+  "mandatory": true,
+  "attrId": "ageband",
+  "isLov": true
+ },
+ {
+  "index": 35,
+  "name": "Color",
+  "mandatory": true,
+  "attrId": "colorapparel",
+  "isLov": true
+ },
+ {
+  "index": 36,
+  "name": "Freebie (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "freebie",
+  "isLov": true
+ },
+ {
+  "index": 37,
+  "name": "Brand Description",
+  "mandatory": true,
+  "attrId": "brandDescription",
+  "isLov": true
+ },
+ {
+  "index": 38,
+  "name": "Fit ( must fill this)",
+  "mandatory": true,
+  "attrId": "womentopwearfit",
+  "isLov": true
+ },
+ {
+  "index": 39,
+  "name": "Color Group (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "colorgroupapparel",
+  "isLov": true
+ },
+ {
+  "index": 40,
+  "name": "Feature",
+  "mandatory": false,
+  "attrId": "featureapparel",
+  "isLov": true
+ },
+ {
+  "index": 41,
+  "name": "Brand (Refer LOV List)",
+  "mandatory": true,
+  "attrId": "brand",
+  "isLov": true
+ },
+ {
+  "index": 42,
+  "name": "GST Eligible",
+  "mandatory": false,
+  "attrId": "gstEligible",
+  "isLov": true
+ },
+ {
+  "index": 43,
+  "name": "Weight",
+  "mandatory": true,
+  "attrId": "weightapparel",
+  "isLov": true
+ },
+ {
+  "index": 44,
+  "name": "Seller Product Association Status (Refer LOV List)",
+  "mandatory": true,
+  "attrId": "sellerAssociationStatus",
+  "isLov": true
+ },
+ {
+  "index": 45,
+  "name": "Additional Details 1",
+  "mandatory": false,
+  "attrId": "additionaldetails1apparel",
+  "isLov": true
+ },
+ {
+  "index": 46,
+  "name": "Additional Details 3",
+  "mandatory": false,
+  "attrId": "additionaldetails3apparel",
+  "isLov": true
+ },
+ {
+  "index": 47,
+  "name": "Tags",
+  "mandatory": false,
+  "attrId": "tags",
+  "isLov": true
+ },
+ {
+  "index": 48,
+  "name": "Key Trends (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "keytrendsapparel",
+  "isLov": true
+ },
+ {
+  "index": 49,
+  "name": "Up Sell - Associated Product Status (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "upSellAssociatedProductStatus",
+  "isLov": true
+ },
+ {
+  "index": 50,
+  "name": "Tshirt Type (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "tshirttype",
+  "isLov": true
+ },
+ {
+  "index": 51,
+  "name": "Size Chart",
+  "mandatory": true,
+  "attrId": "sizechart",
+  "isLov": true
+ },
+ {
+  "index": 52,
+  "name": "Warranty Type (Refer LOV List)",
+  "mandatory": true,
+  "attrId": "warrantyType",
+  "isLov": true
+ },
+ {
+  "index": 53,
+  "name": "Lead time for the SKU - Home Delivery [No. of Minute]",
+  "mandatory": true,
+  "attrId": "leadTimeForTheSKUHomeDelivery",
+  "isLov": true
+ },
+ {
+  "index": 54,
+  "name": "Wash",
+  "mandatory": true,
+  "attrId": "washcare",
+  "isLov": true
+ },
+ {
+  "index": 55,
+  "name": "Neck/Collar (Refer LOV List)",
+  "mandatory": true,
+  "attrId": "womencasualtopwearneckcollar",
+  "isLov": true
+ },
+ {
+  "index": 56,
+  "name": "Style Code",
+  "mandatory": true,
+  "attrId": "stylecode",
+  "isLov": true
+ },
+ {
+  "index": 57,
+  "name": "Occasion (Refer LOV List)",
+  "mandatory": true,
+  "attrId": "occasion",
+  "isLov": true
+ },
+ {
+  "index": 58,
+  "name": "Unisex (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "unisexapparel",
+  "isLov": true
+ },
+ {
+  "index": 59,
+  "name": "Manufacturer's Details",
+  "mandatory": true,
+  "attrId": "manufacturersDetails",
+  "isLov": true
+ },
+ {
+  "index": 60,
+  "name": "Gender (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "gender",
+  "isLov": true
+ },
+ {
+  "index": 61,
+  "name": "Cross Sell - Associated Products",
+  "mandatory": false,
+  "attrId": "crossSellAssociatedProducts",
+  "isLov": true
+ },
+ {
+  "index": 62,
+  "name": "Sleeve Styling (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "sleevestylingapparel",
+  "isLov": true
+ },
+ {
+  "index": 63,
+  "name": "Multi Pack (Refer LOV List)",
+  "mandatory": true,
+  "attrId": "multipack",
+  "isLov": true
+ },
+ {
+  "index": 64,
+  "name": "Lead Variant ID",
+  "mandatory": false,
+  "attrId": "leadvariantid",
+  "isLov": true
+ },
+ {
+  "index": 65,
+  "name": "Net Quantity",
+  "mandatory": true,
+  "attrId": "netQuantity",
+  "isLov": true
+ },
+ {
+  "index": 66,
+  "name": "Display Product Name",
+  "mandatory": true,
+  "attrId": "displayproduct",
+  "isLov": true
+ },
+ {
+  "index": 67,
+  "name": "Platform (Refer LOV List)",
+  "mandatory": true,
+  "attrId": "platform",
+  "isLov": true
+ },
+ {
+  "index": 68,
+  "name": "Season (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "seasonapparel",
+  "isLov": true
+ },
+ {
+  "index": 69,
+  "name": "Pattern (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "womenpattern",
+  "isLov": true
+ },
+ {
+  "index": 70,
+  "name": "Model Fit",
+  "mandatory": true,
+  "attrId": "modelfit",
+  "isLov": true
+ },
+ {
+  "index": 71,
+  "name": "Color Family (Refer LOV List)",
+  "mandatory": true,
+  "attrId": "colorfamilyapparel",
+  "isLov": true
+ },
+ {
+  "index": 72,
+  "name": "Business Tag (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "businesstag",
+  "isLov": true
+ },
+ {
+  "index": 73,
+  "name": "Additional Details 2",
+  "mandatory": false,
+  "attrId": "additionaldetails2apparel",
+  "isLov": true
+ },
+ {
+  "index": 74,
+  "name": "Importer's Details",
+  "mandatory": true,
+  "attrId": "importersDetails",
+  "isLov": true
+ },
+ {
+  "index": 75,
+  "name": "Pack Color (Refer LOV List)",
+  "mandatory": false,
+  "attrId": "packcolor",
+  "isLov": true
+ },
+ {
+  "index": 76,
+  "name": "Dangerous Goods",
+  "mandatory": false,
+  "attrId": "dangerousGoods",
+  "isLov": true
+ },
+ {
+  "index": 77,
+  "name": "Warranty Time Period [Months]",
+  "mandatory": true,
+  "attrId": "warrantyTimePeriod",
+  "isLov": true
+ },
+ {
+  "index": 78,
+  "name": "MRP [INR]",
+  "mandatory": true,
+  "attrId": "mrp",
+  "isLov": true
+ },
+ {
+  "index": 79,
+  "name": "Fabric",
+  "mandatory": true,
+  "attrId": "fabricapparel",
+  "isLov": true
+ },
+ {
+  "index": 80,
+  "name": "Pack Quantity",
+  "mandatory": false,
+  "attrId": "packquantity",
+  "isLov": true
+ },
+ {
+  "index": 81,
+  "name": "Packer's Details",
+  "mandatory": true,
+  "attrId": "packersDetails",
+  "isLov": true
+ },
+ {
+  "index": 82,
+  "name": "Size (Refer LOV List)",
+  "mandatory": true,
+  "attrId": "womencasualtopwearsize",
+  "isLov": true
+ },
+ {
+  "index": 83,
+  "name": "Country of Origin",
+  "mandatory": true,
+  "attrId": "countryOfOrigin",
+  "isLov": true
+ },
+ {
+  "index": 84,
+  "name": "Story Name",
+  "mandatory": false,
+  "attrId": "storyname",
+  "isLov": true
+ },
+ {
+  "index": 85,
+  "name": "Dress Length (Refer LOV List)",
+  "mandatory": true,
+  "attrId": "dresslength",
+  "isLov": true
+ },
+ {
+  "index": 86,
+  "name": "Image_1",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 87,
+  "name": "Image_2",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 88,
+  "name": "Image_3",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 89,
+  "name": "Image_4",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 90,
+  "name": "Image_5",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 91,
+  "name": "Image_6",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ },
+ {
+  "index": 92,
+  "name": "Image_7",
+  "mandatory": false,
+  "attrId": null,
+  "isLov": false
+ }
+]
