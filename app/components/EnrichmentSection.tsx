@@ -2,11 +2,11 @@
 import React, { useState } from "react";
 import FileDrop from "./FileDrop";
 import ReportCard from "./ReportCard";
-import { normalizeWorkbook, tableToXlsxBlob } from "@/lib/lib2/parseWorkbook";
-import { runEnrichment } from "@/lib/lib2/enrichClient";
-import { evaluateAccuracy } from "@/lib/lib2/accuracy";
-import { MODELS, costForUsage } from "@/lib/lib2/cost";
-import { NormalizedTable, RunReport, ProductResult } from "@/lib/lib2/types";
+import { normalizeWorkbook, tableToXlsxBlob } from "@/lib/parseWorkbook";
+import { runEnrichment } from "@/lib/enrichClient";
+import { evaluateAccuracy } from "@/lib/accuracy";
+import { MODELS, costForUsage } from "@/lib/cost";
+import { NormalizedTable, RunReport, ProductResult } from "@/lib/types";
 
 export default function EnrichmentSection() {
   const [sellerName, setSellerName] = useState<string | null>(null);
