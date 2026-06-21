@@ -106,7 +106,8 @@ export default function EnrichmentSection() {
   return (
     <>
       <div className="card">
-        <h2>2 · Enrich seller data</h2>
+        <span className="section-eyebrow">Step 1 · Enrich</span>
+        <h2>Enrich seller data</h2>
         <p className="hint">
           Upload a seller file in any layout — the tool finds the real header row, maps columns to the
           embedded MDD dictionary, then fills or fixes mandatory fields from the product image, applying
@@ -122,6 +123,7 @@ export default function EnrichmentSection() {
       </div>
 
       <div className="card">
+        <span className="section-eyebrow">Configuration</span>
         <h2>Run settings</h2>
         <div className="row">
           <div className="col">

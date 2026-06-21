@@ -2,20 +2,31 @@
 import React, { useState } from "react";
 import SimulatorSection from "./components/SimulatorSection";
 import EnrichmentSection from "./components/EnrichmentSection";
+import EmailSection from "./components/EmailSection";
+
+type Tab = "enrich" | "email" | "simulate";
 
 export default function Page() {
-  const [tab, setTab] = useState<"enrich" | "simulate">("enrich");
+  const [tab, setTab] = useState<Tab>("enrich");
   return (
-    <main className="shell">
-      <div className="tabs">
+    <>
+      <nav className="tabbar">
         <button className="tab" data-active={tab === "enrich"} onClick={() => setTab("enrich")}>
-          Enrichment dashboard
+          Enrichment Dashboard
         </button>
-        <button className="tab" data-active={tab === "simulate"} onClick={() => setTab("simulate")}>
-          Build incorrect data
+        <button className="tab" data-active={tab === "email"} onClick={() => setTab("email")}>
+          Fetch from Email <span className="badge">Soon</span>
         </button>
-      </div>
-      {tab === "enrich" ? <EnrichmentSection /> : <SimulatorSection />}
-    </main>
+        <span className="spacer" />
+        <button className="tab secondary" data-active={tab === "simulate"} onClick={() => setTab("simulate")}>
+          Build Incorrect Data
+        </button>
+      </nav>
+      <main className="shell">
+        {tab === "enrich" && <EnrichmentSection />}
+        {tab === "email" && <EmailSection />}
+        {tab === "simulate" && <SimulatorSection />}
+      </main>
+    </>
   );
 }

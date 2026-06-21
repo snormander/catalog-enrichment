@@ -55,7 +55,8 @@ export default function SimulatorSection() {
   return (
     <>
       <div className="card">
-        <h2>1 · Build incorrect seller data</h2>
+        <span className="section-eyebrow">Test data generator</span>
+        <h2>Build incorrect seller data</h2>
         <p className="hint">
           Upload the corrected golden sheet. The simulator degrades it to mimic real seller files —
           blanking mandatory attributes (missing) and swapping some to image-conflicting values (wrong) —
