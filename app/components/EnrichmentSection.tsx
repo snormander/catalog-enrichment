@@ -17,8 +17,9 @@ export default function EnrichmentSection() {
   const [model, setModel] = useState(MODELS[0].id);
   const [threshold, setThreshold] = useState(80);
   const [verify, setVerify] = useState(false);
-  const [concurrency, setConcurrency] = useState(5);
+  const [concurrency, setConcurrency] = useState(2);
   const [maxImages, setMaxImages] = useState(3);
+  const [rpm, setRpm] = useState(10);
 
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -45,7 +46,7 @@ export default function EnrichmentSection() {
     setProgress({ done: 0, total: seller.rows.length });
     try {
       const out = await runEnrichment(seller, {
-        model, threshold, verifyValidValues: verify, concurrency, maxImages,
+        model, threshold, verifyValidValues: verify, concurrency, maxImages, requestsPerMinute: rpm,
         onProgress: (done, total) => setProgress({ done, total }),
       });
       setResults(out.results);
@@ -154,7 +155,7 @@ export default function EnrichmentSection() {
                 onChange={(e) => setConcurrency(+e.target.value)} />
               <span className="slider-val">{concurrency}×</span>
             </div>
-            <small className="dim">Products processed at once. Higher = faster, but watch your API rate limit.</small>
+            <small className="dim">Products at once. Free-tier Gemini allows few requests/min — keep this at 1–2. Raise it only with billing enabled.</small>
           </div>
           <div className="col">
             <label className="field">Images per product — {maxImages}</label>
@@ -164,6 +165,15 @@ export default function EnrichmentSection() {
               <span className="slider-val">{maxImages}</span>
             </div>
             <small className="dim">Image links sent together per row. More angles can help, but cost more input tokens.</small>
+          </div>
+          <div className="col">
+            <label className="field">Max requests / min — {rpm === 0 ? "unlimited" : rpm}</label>
+            <div className="slider-row">
+              <input type="range" min={0} max={60} value={rpm}
+                onChange={(e) => setRpm(+e.target.value)} />
+              <span className="slider-val">{rpm === 0 ? "∞" : rpm}</span>
+            </div>
+            <small className="dim">Free-tier Flash allows ~10/min. Keep at 10 on a free key; raise it (or set ∞) once billing is enabled.</small>
           </div>
           <div className="col" style={{ display: "flex", alignItems: "center" }}>
             <label style={{ display: "flex", gap: 9, alignItems: "center", fontSize: 13 }}>

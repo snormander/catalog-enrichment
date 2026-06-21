@@ -36,9 +36,26 @@ export interface EnrichOptions {
   model: string;
   threshold: number;
   verifyValidValues: boolean;
-  concurrency?: number; // how many products to process in parallel
-  maxImages?: number;   // how many image links per product to send (1-5)
+  concurrency?: number;        // how many products to process in parallel
+  maxImages?: number;          // how many image links per product to send (1-5)
+  requestsPerMinute?: number;  // pace API calls to stay under rate limits (0 = unlimited)
   onProgress?: (done: number, total: number) => void;
+}
+
+// Simple shared pacer: ensures request *starts* are spaced at least
+// (60000 / rpm) ms apart, so we stay under a provider's per-minute cap even
+// with multiple parallel workers. rpm <= 0 means no pacing.
+function makePacer(rpm: number) {
+  if (!rpm || rpm <= 0) return async () => {};
+  const intervalMs = 60000 / rpm;
+  let nextSlot = 0;
+  return async function pace() {
+    const now = Date.now();
+    const start = Math.max(now, nextSlot);
+    nextSlot = start + intervalMs;
+    const wait = start - now;
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  };
 }
 
 export interface EnrichOutput {
@@ -99,6 +116,7 @@ export async function runEnrichment(
   const skuCol = findSkuColumn(table)!;
   const imageCols = findImageColumns(table);
   const concurrency = Math.max(1, opts.concurrency ?? 6);
+  const pace = makePacer(opts.requestsPerMinute ?? 0);
 
   // All LOV-mapped columns in this file (for the "total attribute cells" context).
   const allLovCols = table.headers.filter((h) => {
@@ -154,6 +172,7 @@ export async function runEnrichment(
 
     if (plan.visualIssues.length && plan.imageUrls.length) {
       try {
+        await pace();
         const resp = await fetch("/api/enrich", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

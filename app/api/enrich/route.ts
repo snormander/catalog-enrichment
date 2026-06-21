@@ -84,16 +84,41 @@ export async function POST(req: NextRequest) {
     };
 
     const url = `${GEMINI_BASE}/${encodeURIComponent(model)}:generateContent?key=${apiKey}`;
-    const gres = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
 
-    if (!gres.ok) {
-      const errText = await gres.text();
+    // Free-tier keys are rate-limited (low requests/min). Gemini answers 429 when
+    // throttled and sometimes 500/503 transiently. Retry a few times with
+    // exponential backoff + jitter, honoring Retry-After when provided.
+    const RETRY_STATUSES = new Set([429, 500, 503]);
+    const MAX_ATTEMPTS = 5;
+    let gres: Response | null = null;
+    let lastErrText = "";
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      gres = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (gres.ok) break;
+      lastErrText = await gres.text();
+      if (!RETRY_STATUSES.has(gres.status) || attempt === MAX_ATTEMPTS) break;
+      const retryAfter = Number(gres.headers.get("retry-after"));
+      // 429 on free tier clears when the per-minute window rolls over, so wait
+      // longer for rate limits than for transient 5xx.
+      const base = gres.status === 429 ? 4000 : 600;
+      const backoffMs = retryAfter
+        ? retryAfter * 1000
+        : Math.min(15000, base * 2 ** (attempt - 1)) + Math.floor(Math.random() * 500);
+      await new Promise((r) => setTimeout(r, backoffMs));
+    }
+
+    if (!gres || !gres.ok) {
+      const status = gres?.status ?? 0;
+      const hint =
+        status === 429
+          ? " (rate limit — lower the Parallel requests setting or enable billing on your key)"
+          : "";
       return NextResponse.json(
-        { error: `Gemini ${gres.status}: ${errText.slice(0, 300)}` },
+        { error: `Gemini ${status}${hint}: ${lastErrText.slice(0, 250)}` },
         { status: 502 }
       );
     }
