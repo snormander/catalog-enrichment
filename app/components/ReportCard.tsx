@@ -5,6 +5,8 @@ import { labelFor } from "@/lib/referenceData";
 
 export default function ReportCard({ report }: { report: RunReport }) {
   const acc = report.accuracy;
+  const f = report.funnel;
+  const pct = (n: number, d: number) => (d ? `${((n / d) * 100).toFixed(1)}%` : "—");
   return (
     <div className="card">
       <div className="spread">
@@ -21,6 +23,87 @@ export default function ReportCard({ report }: { report: RunReport }) {
         <div className="metric warn"><div className="k">Issues found</div><div className="v">{report.cellsWithIssues}</div></div>
         <div className="metric ok"><div className="k">Auto-filled</div><div className="v">{report.cellsApplied}</div></div>
         <div className="metric"><div className="k">Flagged for review</div><div className="v">{report.cellsFlagged}</div></div>
+        <div className="metric bad"><div className="k">Rows errored</div><div className="v">{report.erroredRows}</div></div>
+      </div>
+
+      {report.firstError && (
+        <div className="notice bad" style={{ marginTop: 14 }}>
+          First error seen: <span className="mono">{report.firstError}</span>
+        </div>
+      )}
+
+      <div className="gap" />
+      <h2 style={{ fontSize: 14 }}>Data mix &amp; conversion</h2>
+      <p className="hint">How the mandatory fields flow from raw data down to verified fixes.</p>
+      <div className="scroll-x">
+        <table>
+          <thead>
+            <tr><th>Stage</th><th className="num">Count</th><th className="num">Rate</th><th>Of</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Attribute fields (recognized)</td>
+              <td className="num">{f.totalAttrCells}</td>
+              <td className="num">—</td><td><small className="dim">all LOV fields</small></td>
+            </tr>
+            <tr>
+              <td>Mandatory fields</td>
+              <td className="num">{f.mandatoryCells}</td>
+              <td className="num">{pct(f.mandatoryCells, f.totalAttrCells)}</td>
+              <td><small className="dim">of recognized</small></td>
+            </tr>
+            <tr>
+              <td>Mandatory fields with issues</td>
+              <td className="num">{f.issues}</td>
+              <td className="num">{pct(f.issues, f.mandatoryCells)}</td>
+              <td><small className="dim">of mandatory</small></td>
+            </tr>
+            <tr>
+              <td>&nbsp;&nbsp;↳ Non-visual (flagged)</td>
+              <td className="num">{f.nonVisual}</td>
+              <td className="num">{pct(f.nonVisual, f.issues)}</td>
+              <td><small className="dim">of issues</small></td>
+            </tr>
+            <tr>
+              <td>&nbsp;&nbsp;↳ Visual (image-resolvable)</td>
+              <td className="num">{f.visual}</td>
+              <td className="num">{pct(f.visual, f.issues)}</td>
+              <td><small className="dim">of issues</small></td>
+            </tr>
+            <tr>
+              <td>&nbsp;&nbsp;&nbsp;&nbsp;↳ Couldn’t process (img/API)</td>
+              <td className="num">{f.errored}</td>
+              <td className="num">{pct(f.errored, f.visual)}</td>
+              <td><small className="dim">of visual</small></td>
+            </tr>
+            <tr>
+              <td>&nbsp;&nbsp;&nbsp;&nbsp;↳ Filled (≥ threshold)</td>
+              <td className="num"><b>{f.attempted}</b></td>
+              <td className="num"><b>{pct(f.attempted, f.visual)}</b></td>
+              <td><small className="dim">fill rate, of visual</small></td>
+            </tr>
+            {f.scored !== undefined ? (
+              <>
+                <tr>
+                  <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↳ Verifiable vs correct sheet</td>
+                  <td className="num">{f.scored}</td>
+                  <td className="num">{pct(f.scored, f.attempted)}</td>
+                  <td><small className="dim">of filled</small></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↳ Correct</td>
+                  <td className="num"><b>{f.correct}</b></td>
+                  <td className="num"><b style={{ color: (f.correct! / (f.scored || 1)) >= 0.8 ? "var(--ok)" : (f.correct! / (f.scored || 1)) >= 0.5 ? "var(--warn)" : "var(--bad)" }}>{pct(f.correct!, f.scored!)}</b></td>
+                  <td><small className="dim">accuracy, of verifiable</small></td>
+                </tr>
+              </>
+            ) : (
+              <tr>
+                <td colSpan={4}><small className="dim">Upload the correct sheet to score accuracy on filled fields.</small></td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       <div className="gap" />

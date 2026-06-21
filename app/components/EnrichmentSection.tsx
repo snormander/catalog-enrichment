@@ -17,6 +17,8 @@ export default function EnrichmentSection() {
   const [model, setModel] = useState(MODELS[0].id);
   const [threshold, setThreshold] = useState(80);
   const [verify, setVerify] = useState(false);
+  const [concurrency, setConcurrency] = useState(5);
+  const [maxImages, setMaxImages] = useState(3);
 
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -43,7 +45,7 @@ export default function EnrichmentSection() {
     setProgress({ done: 0, total: seller.rows.length });
     try {
       const out = await runEnrichment(seller, {
-        model, threshold, verifyValidValues: verify,
+        model, threshold, verifyValidValues: verify, concurrency, maxImages,
         onProgress: (done, total) => setProgress({ done, total }),
       });
       setResults(out.results);
@@ -58,12 +60,27 @@ export default function EnrichmentSection() {
         cellsWithIssues: out.cellsWithIssues,
         cellsApplied: out.cellsApplied,
         cellsFlagged: out.cellsFlagged,
+        erroredRows: out.erroredRows,
+        firstError: out.firstError,
+        funnel: {
+          totalAttrCells: out.totalAttrCells,
+          mandatoryCells: out.mandatoryCells,
+          issues: out.cellsWithIssues,
+          nonVisual: out.issuesNonVisual,
+          visual: out.issuesVisual,
+          errored: out.visualErrored,
+          attempted: out.cellsApplied,
+        },
         usage: out.usage,
         costUSD: cost.usd,
         costINR: cost.inr,
         generatedAt: new Date().toISOString(),
       };
-      if (golden) rep.accuracy = evaluateAccuracy(golden, out.results);
+      if (golden) {
+        rep.accuracy = evaluateAccuracy(golden, out.results);
+        rep.funnel.scored = rep.accuracy.evaluated;
+        rep.funnel.correct = rep.accuracy.correct;
+      }
       setReport(rep);
     } catch (e: any) {
       setErr(e.message);
@@ -129,10 +146,32 @@ export default function EnrichmentSection() {
           </div>
         </div>
         <div className="gap" />
-        <label style={{ display: "flex", gap: 9, alignItems: "center", fontSize: 13 }}>
-          <input type="checkbox" checked={verify} onChange={(e) => setVerify(e.target.checked)} />
-          Re-verify already-valid visual fields against the image (more accurate, higher cost)
-        </label>
+        <div className="row">
+          <div className="col">
+            <label className="field">Parallel requests — {concurrency}</label>
+            <div className="slider-row">
+              <input type="range" min={1} max={20} value={concurrency}
+                onChange={(e) => setConcurrency(+e.target.value)} />
+              <span className="slider-val">{concurrency}×</span>
+            </div>
+            <small className="dim">Products processed at once. Higher = faster, but watch your API rate limit.</small>
+          </div>
+          <div className="col">
+            <label className="field">Images per product — {maxImages}</label>
+            <div className="slider-row">
+              <input type="range" min={1} max={5} value={maxImages}
+                onChange={(e) => setMaxImages(+e.target.value)} />
+              <span className="slider-val">{maxImages}</span>
+            </div>
+            <small className="dim">Image links sent together per row. More angles can help, but cost more input tokens.</small>
+          </div>
+          <div className="col" style={{ display: "flex", alignItems: "center" }}>
+            <label style={{ display: "flex", gap: 9, alignItems: "center", fontSize: 13 }}>
+              <input type="checkbox" checked={verify} onChange={(e) => setVerify(e.target.checked)} />
+              Re-verify already-valid visual fields against the image (more accurate, higher cost)
+            </label>
+          </div>
+        </div>
 
         <div className="gap" />
         {err && <div className="notice bad">{err}</div>}
@@ -158,8 +197,12 @@ export default function EnrichmentSection() {
             <h2>Enriched output</h2>
             <button className="btn secondary" onClick={downloadEnriched}>Download enriched .xlsx</button>
           </div>
-          <p className="hint">Per-field decisions for the first products in this run.</p>
-          <div className="scroll-x">
+          <details style={{ marginTop: 8 }}>
+            <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13, color: "var(--accent)" }}>
+              Show per-field decisions ({results.reduce((n, p) => n + p.fields.length, 0)} fields)
+            </summary>
+            <p className="hint" style={{ marginTop: 10 }}>First 60 field decisions in this run.</p>
+            <div className="scroll-x">
             <table>
               <thead>
                 <tr>
@@ -188,6 +231,7 @@ export default function EnrichmentSection() {
               </tbody>
             </table>
           </div>
+          </details>
           {results.some((p) => p.error) && (
             <div className="notice bad" style={{ marginTop: 12 }}>
               Some rows errored (e.g. unreachable image or API issue). They were left unchanged.

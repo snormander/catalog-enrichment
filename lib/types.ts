@@ -66,6 +66,18 @@ export interface AccuracyReport {
   unmatchedRows: number;    // golden rows we couldn't align by SKU
 }
 
+export interface DataFunnel {
+  totalAttrCells: number;    // all recognized LOV attribute cells
+  mandatoryCells: number;    // mandatory subset (the tool's working set)
+  issues: number;            // mandatory cells needing a fix
+  nonVisual: number;         // issues not determinable from an image (flagged)
+  visual: number;            // issues that are visually determinable
+  errored: number;           // visual issues the tool couldn't process (img/API)
+  attempted: number;         // visual issues filled (confidence >= threshold)
+  scored?: number;           // attempted cells the correct sheet can verify
+  correct?: number;          // of scored, how many matched
+}
+
 export interface RunReport {
   fileName: string;
   model: string;
@@ -75,6 +87,9 @@ export interface RunReport {
   cellsWithIssues: number;
   cellsApplied: number;      // changes written (>= threshold)
   cellsFlagged: number;      // issues left for human (< threshold)
+  erroredRows: number;       // products that failed (bad image / API error)
+  firstError?: string;       // first error message seen, for diagnosis
+  funnel: DataFunnel;
   usage: TokenUsage;
   costUSD: number;
   costINR: number;

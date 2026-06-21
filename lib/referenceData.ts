@@ -33,6 +33,26 @@ export const VISUAL_ATTR_IDS = new Set<string>([
   "womenfabric",
 ]);
 
+// Attributes that CANNOT be determined from a product photo. The image can't
+// reveal demographic targeting, a season code, or country of manufacture, so
+// the tool should never auto-fill these from vision — it flags them for a human
+// instead of guessing. This is the single biggest accuracy lever: it stops the
+// model from confidently writing wrong values that tank the score.
+export const NON_VISUAL_ATTR_IDS = new Set<string>([
+  "ageband",         // "22-35", "16 to 22" — not visible in an image
+  "seasonapparel",   // "SS18", "AW19" — a catalogue season code, not visual
+  "countryOfOrigin", // manufacturing origin — not visual
+  "occasion",        // "Work Wear" vs "College Look" — subjective, seller-defined
+]);
+
+// Attribute IDs that are mandatory per the golden schema. The tool focuses on
+// these (the Seller Portal rejects on missing mandatory fields). To also enrich
+// optional visual fields (e.g. Pattern), add their attrId here or relax the
+// targetCols filter in enrichClient.ts.
+export const MANDATORY_ATTR_IDS = new Set<string>(
+  SCHEMA.filter((c) => c.mandatory && c.attrId && MDD.lov[c.attrId]).map((c) => c.attrId as string)
+);
+
 export function allowedValuesFor(attrId: string): string[] {
   return MDD.lov[attrId] || [];
 }

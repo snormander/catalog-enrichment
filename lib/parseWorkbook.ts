@@ -126,11 +126,10 @@ export function buildColumnMap(
       map[h] = HEADER_SYNONYMS[n];
       return;
     }
-    // 4) fuzzy contains
-    const fuzzy = Object.keys(HEADER_SYNONYMS).find(
-      (k) => n.includes(k) || k.includes(n)
-    );
-    map[h] = fuzzy ? HEADER_SYNONYMS[fuzzy] : null;
+    // 4) no confident match -> leave unmapped.
+    // (A loose "contains" check used to mis-map e.g. Image_1 -> ageband
+    //  because "im[age]" contains "age", so it is deliberately removed.)
+    map[h] = null;
   });
   return map;
 }

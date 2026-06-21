@@ -29,19 +29,21 @@ function buildPrompt(sku: string, fields: any[]) {
       .join(", ")}].`;
   });
 
-  return `You are a catalogue data QA expert for an apparel marketplace.
-Look at the product image(s) for SKU ${sku} and determine the correct value for each field below.
+  return `You are a meticulous catalogue data QA expert for an apparel marketplace.
+Study the product image(s) for SKU ${sku} carefully, then determine the correct value for each field below.
 
-Rules:
-- You MUST pick a value verbatim from the allowed list for each field. Never invent values.
-- If the image does not clearly show the attribute, return your best guess but a LOW confidence.
-- confidence is an integer 0-100 reflecting how sure you are the value is correct given the image.
+Strict rules:
+- Pick a value EXACTLY as written in that field's allowed list — copy its spelling, casing and spacing verbatim. Never invent, pluralize, or reformat (e.g. if the list has "Short sleeve", do not return "Short Sleeves").
+- Judge ONLY the main garment in the image, not props, models' other clothing, or background.
+- For colour fields, identify the single DOMINANT colour of the garment and map it to the closest allowed family.
+- Match the most specific correct option (prefer "Half Sleeves" over "Short sleeve" when the image clearly shows half sleeves).
+- Confidence (integer 0-100) must reflect visual certainty: 90-100 only when unmistakable in the image; 50-79 when plausible but uncertain; under 40 when the image does not actually show the attribute (fabric composition, packaging, etc.). Never output high confidence for a guess.
 
 Fields:
 ${lines.join("\n")}
 
 Respond with ONLY valid JSON, no markdown, in exactly this shape:
-{"results":[{"attrId":"<id>","value":"<one of the allowed values>","confidence":<0-100>,"reasoning":"<short>"}]}`;
+{"results":[{"attrId":"<id>","value":"<one allowed value, verbatim>","confidence":<0-100>,"reasoning":"<short>"}]}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -55,14 +57,17 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { model, imageUrls = [], sku = "", fields = [] } = body;
+    const { model, imageUrls = [], sku = "", fields = [], maxImages = 3 } = body;
     if (!fields.length) {
       return NextResponse.json({ results: [], usage: { inputTokens: 0, outputTokens: 0 } });
     }
 
-    // Fetch up to 3 images server-side (avoids browser CORS + keeps payload sane).
+    // Fetch up to `maxImages` images server-side (avoids browser CORS + keeps
+    // payload sane). All are sent together so the model reasons over every angle
+    // in a single call.
+    const cap = Math.max(1, Math.min(Number(maxImages) || 3, 5));
     const parts: any[] = [];
-    for (const url of imageUrls.slice(0, 3)) {
+    for (const url of imageUrls.slice(0, cap)) {
       if (!url || !/^https?:\/\//.test(url)) continue;
       try {
         const img = await fetchImageInline(url);
