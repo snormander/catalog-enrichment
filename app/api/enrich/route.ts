@@ -20,8 +20,13 @@ async function fetchImageInline(url: string) {
   return { mime: mime.split(";")[0], data: buf.toString("base64") };
 }
 
-function buildPrompt(sku: string, fields: any[]) {
+function buildPrompt(sku: string, fields: any[], metadata: Record<string, string>) {
   const lines = fields.map((f, i) => {
+    if (f.freeText || !f.allowedValues || f.allowedValues.length === 0) {
+      return `${i + 1}. Field "${f.label}" (id: ${f.attrId}) — current value: ${
+        f.currentValue ? `"${f.currentValue}"` : "MISSING"
+      }. This is a FREE-TEXT field: return a short, standard value (e.g. for Color a single colour name like "Orange" or "Navy Blue"). Use the image and the product text below.`;
+    }
     return `${i + 1}. Field "${f.label}" (id: ${f.attrId}) — current value: ${
       f.currentValue ? `"${f.currentValue}"` : "MISSING"
     }; issue: ${f.status}. Choose the single best value ONLY from this allowed list: [${f.allowedValues
@@ -29,21 +34,28 @@ function buildPrompt(sku: string, fields: any[]) {
       .join(", ")}].`;
   });
 
+  const metaText = Object.keys(metadata || {}).length
+    ? "\nProduct text (use this — the title/description often states colour, fit, neck, sleeve, pattern):\n" +
+      Object.entries(metadata).map(([k, v]) => `- ${k}: ${v}`).join("\n")
+    : "";
+
   return `You are a meticulous catalogue data QA expert for an apparel marketplace.
-Study the product image(s) for SKU ${sku} carefully, then determine the correct value for each field below.
+Study the product image(s) for SKU ${sku} AND the product text, then determine the correct value for each field below.
 
 Strict rules:
-- Pick a value EXACTLY as written in that field's allowed list — copy its spelling, casing and spacing verbatim. Never invent, pluralize, or reformat (e.g. if the list has "Short sleeve", do not return "Short Sleeves").
-- Judge ONLY the main garment in the image, not props, models' other clothing, or background.
-- For colour fields, identify the single DOMINANT colour of the garment and map it to the closest allowed family.
-- Match the most specific correct option (prefer "Half Sleeves" over "Short sleeve" when the image clearly shows half sleeves).
-- Confidence (integer 0-100) must reflect visual certainty: 90-100 only when unmistakable in the image; 50-79 when plausible but uncertain; under 40 when the image does not actually show the attribute (fabric composition, packaging, etc.). Never output high confidence for a guess.
+- For list-constrained fields, pick a value EXACTLY as written in that field's allowed list — copy its spelling, casing and spacing verbatim. Never invent, pluralize, or reformat (e.g. if the list has "Short sleeve", do not return "Short Sleeves").
+- For FREE-TEXT fields (like Color), return a concise standard value; prefer a colour explicitly named in the product text if it matches the image.
+- Judge ONLY the main garment, not props, models' other clothing, or background.
+- For colour, identify the single DOMINANT colour of the garment.
+- Cross-check the product text: if the title says "Orange Slim Fit Solid High Neck", that strongly indicates colour=Orange, fit=Slim, pattern=Solid, neck=High Neck.
+- Confidence (integer 0-100): 90-100 only when unmistakable; 50-79 when plausible; under 40 when neither image nor text shows the attribute. Never output high confidence for a guess.
+${metaText}
 
 Fields:
 ${lines.join("\n")}
 
 Respond with ONLY valid JSON, no markdown, in exactly this shape:
-{"results":[{"attrId":"<id>","value":"<one allowed value, verbatim>","confidence":<0-100>,"reasoning":"<short>"}]}`;
+{"results":[{"attrId":"<id>","value":"<value>","confidence":<0-100>,"reasoning":"<short>"}]}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -57,7 +69,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { model, imageUrls = [], sku = "", fields = [], maxImages = 3 } = body;
+    const { model, imageUrls = [], sku = "", fields = [], maxImages = 3, metadata = {} } = body;
     if (!fields.length) {
       return NextResponse.json({ results: [], usage: { inputTokens: 0, outputTokens: 0 } });
     }
@@ -76,7 +88,7 @@ export async function POST(req: NextRequest) {
         // skip unreachable images; the model proceeds on remaining ones
       }
     }
-    parts.push({ text: buildPrompt(sku, fields) });
+    parts.push({ text: buildPrompt(sku, fields, metadata) });
 
     const payload = {
       contents: [{ role: "user", parts }],

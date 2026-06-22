@@ -53,17 +53,54 @@ export const MANDATORY_ATTR_IDS = new Set<string>(
   SCHEMA.filter((c) => c.mandatory && c.attrId && MDD.lov[c.attrId]).map((c) => c.attrId as string)
 );
 
+// Mandatory fields that are visually determinable but have NO LOV list in the
+// MDD (free text). The tool still fills these from the image + metadata — most
+// importantly Color, which the seller often leaves blank even though the title
+// usually states it (e.g. "...Womens Orange Slim Fit Top").
+export const FREE_TEXT_VISUAL_ATTR_IDS = new Set<string>([
+  "colorapparel", // Color (free text, no LOV)
+]);
+
+// Row metadata passed to the model to help fill values — the product title,
+// name and descriptions frequently state colour, fit, neck, sleeve, pattern.
+// Listed by attrId (matched from the #ATTR row) OR by normalized display name.
+export const METADATA_ATTR_IDS = [
+  "genericName",
+  "stylenote",
+  "brandDescription",
+];
+export const METADATA_HEADER_KEYS = [
+  "producttitle",
+  "productname",
+  "productdescription",
+  "productminidescription",
+  "productmetatitle",
+  "displayproductname",
+];
+
+// Centralized value normalization for both LOV-validity and accuracy scoring:
+// lowercase, trim, collapse internal whitespace, strip punctuation/hyphens.
+// This bridges trivial vocabulary drift (e.g. "V-Neck" vs "V neck",
+// "Short Sleeves" vs "short sleeves", "Navy  Blue" vs "Navy Blue").
+export function normalizeValue(v: any): string {
+  return String(v ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ") // punctuation/hyphens -> space
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function allowedValuesFor(attrId: string): string[] {
   return MDD.lov[attrId] || [];
 }
 
 export function isLovValid(attrId: string, value: any): boolean {
   if (value === null || value === undefined) return false;
-  const v = String(value).trim().toLowerCase();
+  const v = normalizeValue(value);
   if (!v) return false;
   const list = MDD.lov[attrId];
   if (!list) return true; // free-text attribute: any non-empty value is acceptable
-  return list.some((opt) => opt.trim().toLowerCase() === v);
+  return list.some((opt) => normalizeValue(opt) === v);
 }
 
 export function labelFor(attrId: string): string {

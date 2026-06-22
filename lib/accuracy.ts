@@ -3,10 +3,10 @@
 
 import { NormalizedTable, ProductResult, AccuracyReport } from "./types";
 import { findSkuColumn } from "./parseWorkbook";
-import { normalizeHeader, SCHEMA_NAME_INDEX, HEADER_SYNONYMS } from "./referenceData";
+import { normalizeHeader, SCHEMA_NAME_INDEX, HEADER_SYNONYMS, normalizeValue } from "./referenceData";
 
 function valEq(a: any, b: any): boolean {
-  return String(a ?? "").trim().toLowerCase() === String(b ?? "").trim().toLowerCase();
+  return normalizeValue(a) === normalizeValue(b);
 }
 
 function attrIdForHeader(header: string): string | null {

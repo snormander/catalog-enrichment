@@ -2,17 +2,17 @@
 import React, { useState } from "react";
 import FileDrop from "./FileDrop";
 import ReportCard from "./ReportCard";
-import { normalizeWorkbook, tableToXlsxBlob } from "@/lib/parseWorkbook";
-import { runEnrichment } from "@/lib/enrichClient";
+import { normalizeAllSheets, tablesToXlsxBlob } from "@/lib/parseWorkbook";
+import { runEnrichment, AUDIT_TYPE_COL, AUDIT_CONF_COL } from "@/lib/enrichClient";
 import { evaluateAccuracy } from "@/lib/accuracy";
 import { MODELS, costForUsage } from "@/lib/cost";
 import { NormalizedTable, RunReport, ProductResult } from "@/lib/types";
 
 export default function EnrichmentSection() {
   const [sellerName, setSellerName] = useState<string | null>(null);
-  const [seller, setSeller] = useState<NormalizedTable | null>(null);
+  const [sellerSheets, setSellerSheets] = useState<NormalizedTable[]>([]);
   const [goldenName, setGoldenName] = useState<string | null>(null);
-  const [golden, setGolden] = useState<NormalizedTable | null>(null);
+  const [goldenSheets, setGoldenSheets] = useState<NormalizedTable[]>([]);
 
   const [model, setModel] = useState(MODELS[0].id);
   const [threshold, setThreshold] = useState(80);
@@ -25,60 +25,107 @@ export default function EnrichmentSection() {
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [report, setReport] = useState<RunReport | null>(null);
   const [results, setResults] = useState<ProductResult[]>([]);
-  const [enriched, setEnriched] = useState<NormalizedTable | null>(null);
+  const [enrichedTables, setEnrichedTables] = useState<NormalizedTable[]>([]);
   const [err, setErr] = useState<string | null>(null);
 
   async function onSeller(file: File) {
     setErr(null); setReport(null);
     setSellerName(file.name);
-    try { setSeller(await normalizeWorkbook(file)); }
-    catch (e: any) { setErr("Seller file: " + e.message); }
+    try {
+      const sheets = await normalizeAllSheets(file);
+      if (!sheets.length) { setErr("No product rows found in that file."); return; }
+      setSellerSheets(sheets);
+    } catch (e: any) { setErr("Seller file: " + e.message); }
   }
   async function onGolden(file: File) {
     setGoldenName(file.name);
-    try { setGolden(await normalizeWorkbook(file)); }
+    try { setGoldenSheets(await normalizeAllSheets(file)); }
     catch (e: any) { setErr("Golden file: " + e.message); }
   }
 
-  async function run() {
-    if (!seller) return;
-    setBusy(true); setErr(null); setReport(null);
-    setProgress({ done: 0, total: seller.rows.length });
-    try {
-      const out = await runEnrichment(seller, {
-        model, threshold, verifyValidValues: verify, concurrency, maxImages, requestsPerMinute: rpm,
-        onProgress: (done, total) => setProgress({ done, total }),
-      });
-      setResults(out.results);
-      setEnriched(out.enriched);
+  // Merge all golden sheets into one lookup table for SKU-based accuracy.
+  function mergedGolden(): NormalizedTable | null {
+    if (!goldenSheets.length) return null;
+    const base = goldenSheets[0];
+    return {
+      ...base,
+      rows: goldenSheets.flatMap((s) => s.rows),
+    };
+  }
 
-      const cost = costForUsage(out.usage, model);
+  async function run() {
+    if (!sellerSheets.length) return;
+    setBusy(true); setErr(null); setReport(null);
+    const grandTotal = sellerSheets.reduce((n, s) => n + s.rows.length, 0);
+    setProgress({ done: 0, total: grandTotal });
+
+    try {
+      const allResults: ProductResult[] = [];
+      const outTables: NormalizedTable[] = [];
+      const agg = {
+        cellsScanned: 0, cellsWithIssues: 0, cellsApplied: 0, cellsFlagged: 0,
+        totalAttrCells: 0, mandatoryCells: 0, issuesVisual: 0, issuesNonVisual: 0,
+        visualErrored: 0, erroredRows: 0, inputTokens: 0, outputTokens: 0,
+      };
+      let firstError: string | undefined;
+      let doneSoFar = 0;
+
+      for (const sheet of sellerSheets) {
+        const out = await runEnrichment(sheet, {
+          model, threshold, verifyValidValues: verify, concurrency, maxImages, requestsPerMinute: rpm,
+          onProgress: (d) => setProgress({ done: doneSoFar + d, total: grandTotal }),
+        });
+        doneSoFar += sheet.rows.length;
+
+        out.results.forEach((r) => { r.sheetName = sheet.sheetName; });
+        allResults.push(...out.results);
+        outTables.push(out.enriched);
+
+        agg.cellsScanned += out.cellsScanned;
+        agg.cellsWithIssues += out.cellsWithIssues;
+        agg.cellsApplied += out.cellsApplied;
+        agg.cellsFlagged += out.cellsFlagged;
+        agg.totalAttrCells += out.totalAttrCells;
+        agg.mandatoryCells += out.mandatoryCells;
+        agg.issuesVisual += out.issuesVisual;
+        agg.issuesNonVisual += out.issuesNonVisual;
+        agg.visualErrored += out.visualErrored;
+        agg.erroredRows += out.erroredRows;
+        agg.inputTokens += out.usage.inputTokens;
+        agg.outputTokens += out.usage.outputTokens;
+        if (!firstError && out.firstError) firstError = out.firstError;
+      }
+
+      setResults(allResults);
+      setEnrichedTables(outTables);
+
+      const usage = { inputTokens: agg.inputTokens, outputTokens: agg.outputTokens };
+      const cost = costForUsage(usage, model);
       const rep: RunReport = {
         fileName: sellerName || "seller.xlsx",
         model, threshold,
-        productsProcessed: out.results.length,
-        cellsScanned: out.cellsScanned,
-        cellsWithIssues: out.cellsWithIssues,
-        cellsApplied: out.cellsApplied,
-        cellsFlagged: out.cellsFlagged,
-        erroredRows: out.erroredRows,
-        firstError: out.firstError,
+        productsProcessed: allResults.length,
+        cellsScanned: agg.cellsScanned,
+        cellsWithIssues: agg.cellsWithIssues,
+        cellsApplied: agg.cellsApplied,
+        cellsFlagged: agg.cellsFlagged,
+        erroredRows: agg.erroredRows,
+        firstError,
         funnel: {
-          totalAttrCells: out.totalAttrCells,
-          mandatoryCells: out.mandatoryCells,
-          issues: out.cellsWithIssues,
-          nonVisual: out.issuesNonVisual,
-          visual: out.issuesVisual,
-          errored: out.visualErrored,
-          attempted: out.cellsApplied,
+          totalAttrCells: agg.totalAttrCells,
+          mandatoryCells: agg.mandatoryCells,
+          issues: agg.cellsWithIssues,
+          nonVisual: agg.issuesNonVisual,
+          visual: agg.issuesVisual,
+          errored: agg.visualErrored,
+          attempted: agg.cellsApplied,
         },
-        usage: out.usage,
-        costUSD: cost.usd,
-        costINR: cost.inr,
+        usage, costUSD: cost.usd, costINR: cost.inr,
         generatedAt: new Date().toISOString(),
       };
-      if (golden) {
-        rep.accuracy = evaluateAccuracy(golden, out.results);
+      const g = mergedGolden();
+      if (g) {
+        rep.accuracy = evaluateAccuracy(g, allResults);
         rep.funnel.scored = rep.accuracy.evaluated;
         rep.funnel.correct = rep.accuracy.correct;
       }
@@ -91,8 +138,8 @@ export default function EnrichmentSection() {
   }
 
   function downloadEnriched() {
-    if (!enriched) return;
-    const blob = tableToXlsxBlob(enriched.headers, enriched.rows);
+    if (!enrichedTables.length) return;
+    const blob = tablesToXlsxBlob(enrichedTables, [AUDIT_TYPE_COL, AUDIT_CONF_COL]);
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -103,15 +150,21 @@ export default function EnrichmentSection() {
 
   const pct = progress.total ? (progress.done / progress.total) * 100 : 0;
 
+  // Only the rows where the tool actually changed/flagged something.
+  const changes = results.flatMap((p) =>
+    p.fields.map((f) => ({ ...f, sku: p.sku, sheet: p.sheetName }))
+  );
+  const applied = changes.filter((c) => c.applied);
+
   return (
     <>
       <div className="card">
         <span className="section-eyebrow">Step 1 · Enrich</span>
         <h2>Enrich seller data</h2>
         <p className="hint">
-          Upload a seller file in any layout — the tool finds the real header row, maps columns to the
-          embedded MDD dictionary, then fills or fixes mandatory fields from the product image, applying
-          a value only when the model’s confidence clears your threshold.
+          Upload a seller file in any layout. Every sheet (L4 category) is processed and written back with
+          its original schema preserved. Mandatory fields are filled or fixed from the product image and the
+          product text, applying a value only when the model’s confidence clears your threshold.
         </p>
         <div className="row">
           <div className="col"><FileDrop label="Seller data (to enrich)" onFile={onSeller} fileName={sellerName} /></div>
@@ -120,6 +173,12 @@ export default function EnrichmentSection() {
               hint="Upload to score accuracy; skip to enrich only" />
           </div>
         </div>
+        {sellerSheets.length > 0 && (
+          <p className="hint" style={{ marginTop: 12 }}>
+            Detected {sellerSheets.length} sheet{sellerSheets.length > 1 ? "s" : ""}:{" "}
+            {sellerSheets.map((s) => `${s.sheetName || "Sheet"} (${s.rows.length})`).join(", ")}
+          </p>
+        )}
       </div>
 
       <div className="card">
@@ -196,57 +255,97 @@ export default function EnrichmentSection() {
             <div className="progress"><span style={{ width: `${pct}%` }} /></div>
           </div>
         )}
-        <button className="btn" disabled={!seller || busy} onClick={run}>
+        <button className="btn" disabled={!sellerSheets.length || busy} onClick={run}>
           {busy ? "Enriching…" : "Run enrichment"}
         </button>
       </div>
 
       {report && <ReportCard report={report} />}
 
-      {enriched && (
+      {enrichedTables.length > 0 && (
         <div className="card">
           <div className="spread">
             <h2>Enriched output</h2>
             <button className="btn secondary" onClick={downloadEnriched}>Download enriched .xlsx</button>
           </div>
-          <details style={{ marginTop: 8 }}>
-            <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13, color: "var(--accent)" }}>
-              Show per-field decisions ({results.reduce((n, p) => n + p.fields.length, 0)} fields)
+          <p className="hint">
+            {enrichedTables.length} sheet{enrichedTables.length > 1 ? "s" : ""}, schema preserved, with
+            two audit columns appended. {applied.length} value{applied.length === 1 ? "" : "s"} filled/corrected.
+          </p>
+
+          {/* Changes made — collapsible review pane */}
+          <details open style={{ marginTop: 8 }}>
+            <summary style={{ cursor: "pointer", fontWeight: 650, fontSize: 13.5, color: "var(--accent)" }}>
+              Changes made — {applied.length} filled/corrected (click to {applied.length ? "review" : "expand"})
             </summary>
-            <p className="hint" style={{ marginTop: 10 }}>First 60 field decisions in this run.</p>
+            <p className="hint" style={{ marginTop: 10 }}>
+              Review what changed without opening the file. “Was” shows the prior value (blank = was missing).
+              Showing up to 250 entries.
+            </p>
             <div className="scroll-x">
-            <table>
-              <thead>
-                <tr>
-                  <th>SKU</th><th>Field</th><th>Status</th><th>Was</th>
-                  <th>Proposed</th><th className="num">Conf.</th><th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.flatMap((p) =>
-                  p.fields.map((f, i) => (
-                    <tr key={p.rowNumber + "_" + f.attrId + i}>
-                      <td className="mono">{i === 0 ? p.sku : ""}</td>
-                      <td>{f.column}</td>
-                      <td><span className={"pill " + f.status}>{f.status}</span></td>
-                      <td>{f.previousValue ? String(f.previousValue) : <small className="dim">—</small>}</td>
-                      <td>{f.proposedValue ?? <small className="dim">—</small>}</td>
-                      <td className="num">{f.confidence}%</td>
-                      <td>
-                        <span className={"pill " + (f.applied ? "applied" : "flagged")}>
-                          {f.applied ? "filled" : "flagged"}
-                        </span>
-                      </td>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Sheet</th><th>SKU</th><th>Field</th><th>Status</th>
+                    <th>Was</th><th>Now</th><th className="num">Conf.</th><th>Reasoning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {applied.slice(0, 250).map((c, i) => (
+                    <tr key={i}>
+                      <td><small className="dim">{c.sheet || "—"}</small></td>
+                      <td className="mono">{c.sku}</td>
+                      <td>{c.column}</td>
+                      <td><span className={"pill " + c.status}>{c.status}</span></td>
+                      <td>{c.previousValue && String(c.previousValue).trim()
+                        ? String(c.previousValue)
+                        : <span className="pill missing">blank</span>}</td>
+                      <td><b>{c.proposedValue}</b></td>
+                      <td className="num">{c.confidence}%</td>
+                      <td><small className="dim">{c.reasoning || "—"}</small></td>
                     </tr>
-                  ))
-                ).slice(0, 60)}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </details>
+
+          {/* Flagged (not written) — separate collapsible */}
+          <details style={{ marginTop: 12 }}>
+            <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13, color: "var(--muted)" }}>
+              Flagged for review — {changes.length - applied.length} not written (below threshold / non-visual / no image)
+            </summary>
+            <div className="scroll-x" style={{ marginTop: 10 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Sheet</th><th>SKU</th><th>Field</th><th>Status</th>
+                    <th>Was</th><th>Suggested</th><th className="num">Conf.</th><th>Reasoning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {changes.filter((c) => !c.applied).slice(0, 250).map((c, i) => (
+                    <tr key={i}>
+                      <td><small className="dim">{c.sheet || "—"}</small></td>
+                      <td className="mono">{c.sku}</td>
+                      <td>{c.column}</td>
+                      <td><span className={"pill " + c.status}>{c.status}</span></td>
+                      <td>{c.previousValue && String(c.previousValue).trim()
+                        ? String(c.previousValue)
+                        : <span className="pill missing">blank</span>}</td>
+                      <td>{c.proposedValue ?? <small className="dim">—</small>}</td>
+                      <td className="num">{c.confidence}%</td>
+                      <td><small className="dim">{c.reasoning || "—"}</small></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+
           {results.some((p) => p.error) && (
             <div className="notice bad" style={{ marginTop: 12 }}>
-              Some rows errored (e.g. unreachable image or API issue). They were left unchanged.
+              Some rows errored (unreachable image or API issue) and were left unchanged.
             </div>
           )}
         </div>

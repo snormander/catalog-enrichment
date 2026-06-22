@@ -16,6 +16,8 @@ export interface SchemaColumn {
 
 // A normalized table extracted from any seller file format.
 export interface NormalizedTable {
+  sheetName?: string;          // source sheet name (the L4 category)
+  headerBlock: any[][];        // raw rows above the data (5-row schema block)
   headerRowIndex: number;      // 0-based row in the raw sheet used as header
   dataStartIndex: number;      // 0-based row where product data begins
   headers: string[];           // cleaned header names
@@ -47,6 +49,7 @@ export interface FieldResult {
 
 export interface ProductResult {
   rowNumber: number;
+  sheetName?: string;
   sku: string;
   imageUrls: string[];
   fields: FieldResult[];

@@ -11,18 +11,27 @@ import {
   SKU_HEADER_KEYS,
 } from "./referenceData";
 
-// Read a File into a 2D array of raw cell values.
-export async function readSheetMatrix(file: File): Promise<any[][]> {
-  const buf = await file.arrayBuffer();
-  const wb = XLSX.read(buf, { type: "array" });
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const matrix = XLSX.utils.sheet_to_json<any[]>(ws, {
+function wsToMatrix(ws: XLSX.WorkSheet): any[][] {
+  return XLSX.utils.sheet_to_json<any[]>(ws, {
     header: 1,
     raw: false,
     defval: "",
     blankrows: false,
-  });
-  return matrix as any[][];
+  }) as any[][];
+}
+
+// Read the FIRST sheet into a 2D array (kept for the simulator).
+export async function readSheetMatrix(file: File): Promise<any[][]> {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: "array" });
+  return wsToMatrix(wb.Sheets[wb.SheetNames[0]]);
+}
+
+// Read ALL sheets into [{name, matrix}] (each sheet is an L4 category).
+export async function readAllSheets(file: File): Promise<{ name: string; matrix: any[][] }[]> {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: "array" });
+  return wb.SheetNames.map((name) => ({ name, matrix: wsToMatrix(wb.Sheets[name]) }));
 }
 
 // Score a candidate header row by how many of its cells look like known columns.
@@ -134,14 +143,14 @@ export function buildColumnMap(
   return map;
 }
 
-export async function normalizeWorkbook(file: File): Promise<NormalizedTable> {
-  const matrix = await readSheetMatrix(file);
+// Normalize a single raw matrix into a NormalizedTable, capturing the full
+// header block (every row above the data) so the schema can be re-emitted.
+export function normalizeMatrix(matrix: any[][], sheetName?: string): NormalizedTable {
   const { headerRowIndex, dataStartIndex, attrRowIndex } = detectStructure(matrix);
 
   const rawHeaders = (matrix[headerRowIndex] || []).map((h, i) =>
     String(h).trim() || `col_${i}`
   );
-  // de-duplicate header names
   const seen: Record<string, number> = {};
   const headers = rawHeaders.map((h) => {
     if (seen[h] === undefined) {
@@ -154,6 +163,10 @@ export async function normalizeWorkbook(file: File): Promise<NormalizedTable> {
 
   const attrRow = attrRowIndex !== null ? matrix[attrRowIndex] : null;
   const columnMap = buildColumnMap(headers, attrRow);
+
+  // Everything above the data rows is the schema block (type / mandatory /
+  // char-limit / display name / #ATTR system name). Preserved verbatim.
+  const headerBlock = matrix.slice(0, dataStartIndex).map((r) => (r || []).slice());
 
   const rows: Record<string, any>[] = [];
   const rawRowNumbers: number[] = [];
@@ -168,14 +181,25 @@ export async function normalizeWorkbook(file: File): Promise<NormalizedTable> {
     rawRowNumbers.push(r);
   }
 
-  return {
-    headerRowIndex,
-    dataStartIndex,
-    headers,
-    rows,
-    columnMap,
-    rawRowNumbers,
-  };
+  return { sheetName, headerBlock, headerRowIndex, dataStartIndex, headers, rows, columnMap, rawRowNumbers };
+}
+
+export async function normalizeWorkbook(file: File): Promise<NormalizedTable> {
+  const matrix = await readSheetMatrix(file);
+  return normalizeMatrix(matrix);
+}
+
+// Parse EVERY sheet in the workbook (each = an L4 category). Sheets with no
+// detectable product rows are skipped.
+export async function normalizeAllSheets(file: File): Promise<NormalizedTable[]> {
+  const sheets = await readAllSheets(file);
+  const tables: NormalizedTable[] = [];
+  for (const { name, matrix } of sheets) {
+    if (!matrix || matrix.length === 0) continue;
+    const t = normalizeMatrix(matrix, name);
+    if (t.rows.length > 0) tables.push(t);
+  }
+  return tables;
 }
 
 // Find the SKU column name within a normalized table.
@@ -195,17 +219,68 @@ export function findImageColumns(table: NormalizedTable): string[] {
   });
 }
 
-// Export a table back to an .xlsx Blob for download.
-export function tableToXlsxBlob(
-  headers: string[],
-  rows: Record<string, any>[]
-): Blob {
+// Build one worksheet AoA preserving the original schema header block, then the
+// data rows, with two audit columns appended at the end.
+function tableToAoa(table: NormalizedTable, auditCols: string[]): any[][] {
+  const ncol = table.headers.length;
+  const aoa: any[][] = [];
+
+  // Re-emit the original header block (type / mandatory / char-limit / display
+  // name / #ATTR). Pad/trim each row to the column count, then append audit
+  // header cells so the schema rows line up with the new columns.
+  const block = table.headerBlock && table.headerBlock.length
+    ? table.headerBlock
+    : [table.headers]; // fallback: single header row
+  const lastIdx = block.length - 1;
+  block.forEach((row, ri) => {
+    const r = Array.from({ length: ncol }, (_, i) => (row[i] !== undefined ? row[i] : ""));
+    // audit columns: label them sensibly across the schema rows
+    auditCols.forEach((name) => {
+      if (ri === 0) r.push("String");
+      else if (lastIdx >= 1 && ri === 1) r.push("NON-MANDATORY");
+      else if (ri === lastIdx) r.push(name); // put the column name on the last (name) row
+      else r.push("");
+    });
+    aoa.push(r);
+  });
+
+  // Data rows
+  for (const row of table.rows) {
+    const r = table.headers.map((h) => row[h] ?? "");
+    auditCols.forEach((name) => r.push(row[name] ?? ""));
+    aoa.push(r);
+  }
+  return aoa;
+}
+
+const XLSX_MIME =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+// Single-table export (used by the simulator).
+export function tableToXlsxBlob(headers: string[], rows: Record<string, any>[]): Blob {
   const aoa = [headers, ...rows.map((row) => headers.map((h) => row[h] ?? ""))];
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
   const out = XLSX.write(wb, { type: "array", bookType: "xlsx" });
-  return new Blob([out], {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  return new Blob([out], { type: XLSX_MIME });
+}
+
+// Multi-sheet, schema-preserving export. One sheet per L4 table, audit columns
+// appended. Used for the enriched output and the simulator's schema'd output.
+export function tablesToXlsxBlob(
+  tables: NormalizedTable[],
+  auditCols: string[] = []
+): Blob {
+  const wb = XLSX.utils.book_new();
+  const used = new Set<string>();
+  tables.forEach((t, i) => {
+    let name = (t.sheetName || `Sheet${i + 1}`).replace(/[\\/?*[\]:]/g, " ").slice(0, 31) || `Sheet${i + 1}`;
+    while (used.has(name)) name = (name.slice(0, 28) + "_" + (i + 1)).slice(0, 31);
+    used.add(name);
+    const ws = XLSX.utils.aoa_to_sheet(tableToAoa(t, auditCols));
+    XLSX.utils.book_append_sheet(wb, ws, name);
   });
+  const out = XLSX.write(wb, { type: "array", bookType: "xlsx" });
+  return new Blob([out], { type: XLSX_MIME });
 }

@@ -18,6 +18,10 @@ import {
   VISUAL_ATTR_IDS,
   NON_VISUAL_ATTR_IDS,
   MANDATORY_ATTR_IDS,
+  FREE_TEXT_VISUAL_ATTR_IDS,
+  METADATA_ATTR_IDS,
+  METADATA_HEADER_KEYS,
+  normalizeHeader,
 } from "./referenceData";
 import { findSkuColumn, findImageColumns } from "./parseWorkbook";
 
@@ -28,6 +32,10 @@ export const AUDIT_CONF_COL = "_enrichment_confidence";
 function classify(attrId: string, value: any): FieldStatus {
   const empty = value === null || value === undefined || String(value).trim() === "";
   if (empty) return "missing";
+  // free-text fields (e.g. Color) have no LOV; if present, leave as-is unless re-verifying
+  if (FREE_TEXT_VISUAL_ATTR_IDS.has(attrId)) {
+    return VISUAL_ATTR_IDS.has(attrId) ? "conflict" : "ok";
+  }
   if (!isLovValid(attrId, value)) return "not_lov";
   return VISUAL_ATTR_IDS.has(attrId) ? "conflict" : "ok";
 }
@@ -76,12 +84,22 @@ export interface EnrichOutput {
   firstError?: string;   // first error message seen (for diagnosis)
 }
 
-function planRow(table: NormalizedTable, i: number, targetCols: string[], skuCol: string, imageCols: string[], verify: boolean) {
+function gatherMetadata(table: NormalizedTable, row: Record<string, any>, metaCols: string[]): Record<string, string> {
+  const meta: Record<string, string> = {};
+  for (const col of metaCols) {
+    const v = String(row[col] ?? "").trim();
+    if (v) meta[col] = v.slice(0, 400); // cap length
+  }
+  return meta;
+}
+
+function planRow(table: NormalizedTable, i: number, targetCols: string[], skuCol: string, imageCols: string[], metaCols: string[], verify: boolean) {
   const row = table.rows[i];
   const sku = String(row[skuCol] ?? "").trim();
   const imageUrls = imageCols
     .map((c) => String(row[c] ?? "").trim())
     .filter((u) => /^https?:\/\//.test(u));
+  const metadata = gatherMetadata(table, row, metaCols);
 
   const visualIssues: any[] = [];
   const flagIssues: any[] = [];
@@ -94,19 +112,25 @@ function planRow(table: NormalizedTable, i: number, targetCols: string[], skuCol
     if (status === "ok") continue;
     if (status === "conflict" && !verify) continue;
 
+    // Free-text fields (e.g. Color) have no LOV to pick from, so we don't send
+    // them to the model with an empty list — they're filled deterministically
+    // by mirroring from their LOV counterpart (Color Family) after enrichment.
+    if (!MDD.lov[attrId]) continue;
+
     const issue = {
       column: col,
       attrId,
       label: labelFor(attrId),
       status,
       currentValue: row[col],
-      allowedValues: MDD.lov[attrId],
+      allowedValues: MDD.lov[attrId] || [],
+      freeText: false,
     };
     if (NON_VISUAL_ATTR_IDS.has(attrId)) flagIssues.push(issue);
     else visualIssues.push(issue);
   }
 
-  return { i, sku, imageUrls, visualIssues, flagIssues, scanned };
+  return { i, sku, imageUrls, metadata, visualIssues, flagIssues, scanned };
 }
 
 export async function runEnrichment(
@@ -123,11 +147,29 @@ export async function runEnrichment(
     const aid = table.columnMap[h];
     return aid && MDD.lov[aid];
   });
-  // The tool's working set: mandatory LOV columns only.
-  const targetCols = allLovCols.filter((h) => MANDATORY_ATTR_IDS.has(table.columnMap[h]!));
+  // The tool's working set: mandatory LOV columns + mandatory free-text visual
+  // fields (e.g. Color, which has no LOV but should still be filled).
+  const targetCols = table.headers.filter((h) => {
+    const aid = table.columnMap[h];
+    if (!aid) return false;
+    if (MDD.lov[aid] && MANDATORY_ATTR_IDS.has(aid)) return true;
+    if (FREE_TEXT_VISUAL_ATTR_IDS.has(aid)) return true; // Color etc.
+    return false;
+  });
+
+  // Metadata columns (title / name / description / etc.) passed to the model.
+  const metaCols = table.headers.filter((h) => {
+    const aid = table.columnMap[h];
+    if (aid && METADATA_ATTR_IDS.includes(aid)) return true;
+    return METADATA_HEADER_KEYS.includes(normalizeHeader(h));
+  });
 
   const totalAttrCells = allLovCols.length * table.rows.length;
   const mandatoryCells = targetCols.length * table.rows.length;
+
+  // Color (free text) is mirrored from Color Family (LOV) so it always fills.
+  const colorCol = table.headers.find((h) => table.columnMap[h] === "colorapparel");
+  const colorFamilyCol = table.headers.find((h) => table.columnMap[h] === "colorfamilyapparel");
 
   const usage: TokenUsage = { inputTokens: 0, outputTokens: 0 };
   let cellsScanned = 0;
@@ -147,7 +189,7 @@ export async function runEnrichment(
   let done = 0;
 
   async function processOne(idx: number) {
-    const plan = planRow(table, idx, targetCols, skuCol, imageCols, opts.verifyValidValues);
+    const plan = planRow(table, idx, targetCols, skuCol, imageCols, metaCols, opts.verifyValidValues);
     cellsScanned += plan.scanned;
     cellsWithIssues += plan.visualIssues.length + plan.flagIssues.length;
     issuesVisual += plan.visualIssues.length;
@@ -181,6 +223,7 @@ export async function runEnrichment(
             imageUrls: plan.imageUrls,
             sku: plan.sku,
             fields: plan.visualIssues,
+            metadata: plan.metadata,
             maxImages: opts.maxImages ?? 3,
           }),
         });
@@ -237,6 +280,27 @@ export async function runEnrichment(
     }
 
     if (error) { erroredRows++; if (!firstError) firstError = error; }
+
+    // Mirror Color (free text) from Color Family if Color is still blank.
+    if (colorCol && colorFamilyCol) {
+      const curColor = String(enrichedRows[idx][colorCol] ?? "").trim();
+      const famVal = String(enrichedRows[idx][colorFamilyCol] ?? "").trim();
+      if (!curColor && famVal) {
+        enrichedRows[idx][colorCol] = famVal;
+        cellsApplied++;
+        const famRes = fieldResults.find((fr) => fr.attrId === "colorfamilyapparel");
+        fieldResults.push({
+          column: colorCol,
+          attrId: "colorapparel",
+          proposedValue: famVal,
+          confidence: famRes ? famRes.confidence : 100,
+          reasoning: "Mirrored from Color Family",
+          applied: true,
+          status: "missing",
+          previousValue: "",
+        });
+      }
+    }
 
     // Audit columns: list each field the tool acted on (filled or flagged),
     // with its visual/non-visual type and confidence. Blank if nothing acted on.
