@@ -22,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <h1>Catalogue Enrichment</h1>
               <div className="sub">Tata CLiQ Fashion · seller data QA &amp; enrichment</div>
             </div>
+            <div className="credit">Built by <strong>Zaynah Mahmood</strong> · Catalog Team</div>
           </div>
         </header>
         {children}

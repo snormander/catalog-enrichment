@@ -238,3 +238,20 @@ small.dim { color: var(--muted); }
 .stat-chip .n { font-family: var(--mono); font-size: 22px; font-weight: 600; color: var(--accent); }
 .stat-chip .l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 650; }
 .disabled-veil { opacity: 0.55; pointer-events: none; filter: grayscale(0.2); }
+
+/* ---------- Header credit ---------- */
+.app-header-inner .credit {
+  margin-left: auto; font-size: 11.5px; color: #b6aecb; text-align: right;
+  line-height: 1.3; align-self: center;
+}
+.app-header-inner .credit strong { color: #fff; font-weight: 600; }
+
+/* ---------- Image Studio grid ---------- */
+.img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.img-tile { border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden;
+  background: #fff; display: flex; flex-direction: column; }
+.img-thumb { height: 150px; background-size: cover; background-position: center; background-color: #f2f0f7; }
+.img-meta { padding: 10px 12px; flex: 1; }
+.img-name { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.img-dim { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 3px; }
+.img-dl { margin: 0 12px 12px; padding: 7px 12px; font-size: 12.5px; }

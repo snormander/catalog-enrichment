@@ -51,7 +51,7 @@ export default function SimulatorSection() {
 
   function download() {
     if (!degraded) return;
-    const blob = tablesToXlsxBlob(degraded, []); // schema preserved, no audit cols
+    const blob = tablesToXlsxBlob(degraded); // schema preserved
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

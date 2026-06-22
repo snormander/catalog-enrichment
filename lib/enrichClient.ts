@@ -22,12 +22,40 @@ import {
   METADATA_ATTR_IDS,
   METADATA_HEADER_KEYS,
   normalizeHeader,
+  L4_LIST,
+  isDressL4,
 } from "./referenceData";
 import { findSkuColumn, findImageColumns } from "./parseWorkbook";
 
 // Names of the two audit columns appended to the enriched output.
 export const AUDIT_TYPE_COL = "_enrichment_type";
 export const AUDIT_CONF_COL = "_enrichment_confidence";
+export const L4_COL = "_L4_category";
+
+// Columns the tool itself adds — stripped from input before re-enriching so
+// they don't stack up on repeated runs.
+export const TOOL_ADDED_COLS = [AUDIT_TYPE_COL, AUDIT_CONF_COL, L4_COL];
+
+// Lightweight keyword fallback if the model doesn't return an L4.
+export function guessL4FromText(text: string): string {
+  const s = (text || "").toLowerCase();
+  const pick = (kw: string[], l4: string) => kw.some((k) => s.includes(k)) ? l4 : "";
+  return (
+    pick(["maxi", "midi", "gown", " dress"], "Casual dresses") ||
+    pick(["formal shirt"], "Formal shirt") ||
+    pick(["shirt"], "casual shirts") ||
+    pick(["jean", "denim"], "Jeans") ||
+    pick(["short"], "Shorts") ||
+    pick(["skirt"], "Skirts") ||
+    pick(["hoodie", "sweatshirt"], "Sweatshirts and hoodies") ||
+    pick(["sweater", "pullover"], "Sweaters") ||
+    pick(["kurta", "kurti"], "Kurta & kurtis") ||
+    pick(["legging", "jegging"], "Leggings & Jeggings") ||
+    pick(["jumpsuit", "jump suit"], "Jump suits") ||
+    pick(["top", "tee", "t-shirt", "tshirt", "blouse"], "Tops and tees") ||
+    "Tops and tees"
+  );
+}
 
 function classify(attrId: string, value: any): FieldStatus {
   const empty = value === null || value === undefined || String(value).trim() === "";
@@ -137,6 +165,20 @@ export async function runEnrichment(
   table: NormalizedTable,
   opts: EnrichOptions
 ): Promise<EnrichOutput> {
+  // Strip any columns the tool added on a previous run so they don't stack up.
+  if (table.headers.some((h) => TOOL_ADDED_COLS.includes(h))) {
+    const keep = table.headers.filter((h) => !TOOL_ADDED_COLS.includes(h));
+    const cleanedRows = table.rows.map((r) => {
+      const o: Record<string, any> = {};
+      for (const h of keep) o[h] = r[h];
+      return o;
+    });
+    const cleanedBlock = (table.headerBlock || []).map((row) =>
+      table.headers.map((h, i) => row[i]).filter((_, i) => !TOOL_ADDED_COLS.includes(table.headers[i]))
+    );
+    table = { ...table, headers: keep, rows: cleanedRows, headerBlock: cleanedBlock };
+  }
+
   const skuCol = findSkuColumn(table)!;
   const imageCols = findImageColumns(table);
   const concurrency = Math.max(1, opts.concurrency ?? 6);
@@ -212,6 +254,7 @@ export async function runEnrichment(
       });
     }
 
+    let modelL4: string | null = null;
     if (plan.visualIssues.length && plan.imageUrls.length) {
       try {
         await pace();
@@ -225,6 +268,7 @@ export async function runEnrichment(
             fields: plan.visualIssues,
             metadata: plan.metadata,
             maxImages: opts.maxImages ?? 3,
+            l4List: L4_LIST,
           }),
         });
         const data = await resp.json();
@@ -233,6 +277,7 @@ export async function runEnrichment(
           cellsFlagged += plan.visualIssues.length;
           visualErrored += plan.visualIssues.length;
         } else {
+          modelL4 = data.l4 || null;
           usage.inputTokens += data.usage?.inputTokens || 0;
           usage.outputTokens += data.usage?.outputTokens || 0;
           for (const r of data.results) {
@@ -280,6 +325,26 @@ export async function runEnrichment(
     }
 
     if (error) { erroredRows++; if (!firstError) firstError = error; }
+
+    // Resolve L4: model classification, else keyword fallback from metadata text.
+    const metaText = Object.values(plan.metadata || {}).join(" ");
+    const rowL4 = modelL4 || guessL4FromText(metaText);
+    enrichedRows[idx][L4_COL] = rowL4;
+
+    // Dress Length only applies to dress-type categories. If this row isn't a
+    // dress and the tool filled dress length, revert it (keep the cell blank).
+    if (!isDressL4(rowL4)) {
+      for (const fr of fieldResults) {
+        if (fr.attrId === "dresslength" && fr.applied) {
+          enrichedRows[idx][fr.column] = "";
+          fr.applied = false;
+          fr.proposedValue = null;
+          fr.reasoning = "skipped — dress length not applicable to " + (rowL4 || "this category");
+          cellsApplied--;
+          cellsFlagged++;
+        }
+      }
+    }
 
     // Mirror Color (free text) from Color Family if Color is still blank.
     if (colorCol && colorFamilyCol) {
@@ -340,7 +405,7 @@ export async function runEnrichment(
     results,
     enriched: {
       ...table,
-      headers: [...table.headers, AUDIT_TYPE_COL, AUDIT_CONF_COL],
+      headers: [...table.headers, L4_COL, AUDIT_TYPE_COL, AUDIT_CONF_COL],
       rows: enrichedRows,
     },
     usage,

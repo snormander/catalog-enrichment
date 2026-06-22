@@ -219,44 +219,49 @@ export function findImageColumns(table: NormalizedTable): string[] {
   });
 }
 
-// Build one worksheet AoA preserving the original schema header block, then the
-// data rows, with two audit columns appended at the end.
-function tableToAoa(table: NormalizedTable, auditCols: string[]): any[][] {
-  const ncol = table.headers.length;
-  const aoa: any[][] = [];
-
-  // Re-emit the original header block (type / mandatory / char-limit / display
-  // name / #ATTR). Pad/trim each row to the column count, then append audit
-  // header cells so the schema rows line up with the new columns.
+// Build one worksheet AoA preserving the original 5-row schema header block,
+// then the data rows. Header-driven: emits exactly `table.headers`. Columns the
+// tool added (names starting with "_": _L4_category, _enrichment_*) aren't in
+// the original block, so their schema cells are synthesized.
+function tableToAoa(table: NormalizedTable): any[][] {
+  const headers = table.headers;
+  const origLen = (table.headerBlock?.[0]?.length) ?? headers.length;
   const block = table.headerBlock && table.headerBlock.length
     ? table.headerBlock
-    : [table.headers]; // fallback: single header row
+    : [headers];
   const lastIdx = block.length - 1;
+  const isTool = (h: string) => typeof h === "string" && h.startsWith("_");
+
+  const aoa: any[][] = [];
   block.forEach((row, ri) => {
-    const r = Array.from({ length: ncol }, (_, i) => (row[i] !== undefined ? row[i] : ""));
-    // audit columns: label them sensibly across the schema rows
-    auditCols.forEach((name) => {
-      if (ri === 0) r.push("String");
-      else if (lastIdx >= 1 && ri === 1) r.push("NON-MANDATORY");
-      else if (ri === lastIdx) r.push(name); // put the column name on the last (name) row
-      else r.push("");
+    const r = headers.map((h, i) => {
+      if (i >= origLen || isTool(h)) {
+        // synthesized schema cell for an appended tool column
+        if (ri === 0) return "String";
+        if (lastIdx >= 1 && ri === 1) return "NON-MANDATORY";
+        if (ri === lastIdx) return h; // display-name row carries the column name
+        return "";
+      }
+      return row[i] !== undefined ? row[i] : "";
     });
     aoa.push(r);
   });
-
-  // Data rows
-  for (const row of table.rows) {
-    const r = table.headers.map((h) => row[h] ?? "");
-    auditCols.forEach((name) => r.push(row[name] ?? ""));
-    aoa.push(r);
-  }
+  for (const row of table.rows) aoa.push(headers.map((h) => row[h] ?? ""));
   return aoa;
 }
 
 const XLSX_MIME =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-// Single-table export (used by the simulator).
+function safeSheetName(name: string, used: Set<string>, fallback: string): string {
+  let n = (name || fallback).replace(/[\\/?*[\]:]/g, " ").trim().slice(0, 31) || fallback;
+  let base = n, k = 2;
+  while (used.has(n)) { n = (base.slice(0, 28) + " " + k).slice(0, 31); k++; }
+  used.add(n);
+  return n;
+}
+
+// Single-table export (used by the simulator's plain path).
 export function tableToXlsxBlob(headers: string[], rows: Record<string, any>[]): Blob {
   const aoa = [headers, ...rows.map((row) => headers.map((h) => row[h] ?? ""))];
   const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -266,21 +271,43 @@ export function tableToXlsxBlob(headers: string[], rows: Record<string, any>[]):
   return new Blob([out], { type: XLSX_MIME });
 }
 
-// Multi-sheet, schema-preserving export. One sheet per L4 table, audit columns
-// appended. Used for the enriched output and the simulator's schema'd output.
-export function tablesToXlsxBlob(
-  tables: NormalizedTable[],
-  auditCols: string[] = []
-): Blob {
+// Multi-sheet, schema-preserving export (one sheet per input table).
+export function tablesToXlsxBlob(tables: NormalizedTable[]): Blob {
   const wb = XLSX.utils.book_new();
   const used = new Set<string>();
   tables.forEach((t, i) => {
-    let name = (t.sheetName || `Sheet${i + 1}`).replace(/[\\/?*[\]:]/g, " ").slice(0, 31) || `Sheet${i + 1}`;
-    while (used.has(name)) name = (name.slice(0, 28) + "_" + (i + 1)).slice(0, 31);
-    used.add(name);
-    const ws = XLSX.utils.aoa_to_sheet(tableToAoa(t, auditCols));
-    XLSX.utils.book_append_sheet(wb, ws, name);
+    const name = safeSheetName(t.sheetName || `Sheet${i + 1}`, used, `Sheet${i + 1}`);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(tableToAoa(t)), name);
   });
+  const out = XLSX.write(wb, { type: "array", bookType: "xlsx" });
+  return new Blob([out], { type: XLSX_MIME });
+}
+
+// Enriched export: a "Main – Enriched" tab with every row, then one tab per
+// distinct L4 category (read from `l4Col`), each preserving the schema block.
+export function enrichedToL4Blob(table: NormalizedTable, l4Col: string): Blob {
+  const wb = XLSX.utils.book_new();
+  const used = new Set<string>();
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.aoa_to_sheet(tableToAoa(table)),
+    safeSheetName("Main – Enriched", used, "Main")
+  );
+
+  const groups: Record<string, Record<string, any>[]> = {};
+  for (const row of table.rows) {
+    const l4 = String(row[l4Col] ?? "").trim() || "Uncategorized";
+    (groups[l4] ||= []).push(row);
+  }
+  for (const [l4, rows] of Object.entries(groups)) {
+    const sub: NormalizedTable = { ...table, rows };
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.aoa_to_sheet(tableToAoa(sub)),
+      safeSheetName(l4, used, "L4")
+    );
+  }
   const out = XLSX.write(wb, { type: "array", bookType: "xlsx" });
   return new Blob([out], { type: XLSX_MIME });
 }

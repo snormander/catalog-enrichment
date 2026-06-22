@@ -3,6 +3,7 @@
 
 import mddLovJson from "@/data/mdd_lov.json";
 import schemaJson from "@/data/golden_schema.json";
+import hierarchyJson from "@/data/hierarchy.json";
 import { SchemaColumn } from "./types";
 
 interface MddLov {
@@ -12,6 +13,21 @@ interface MddLov {
 
 export const MDD: MddLov = mddLovJson as MddLov;
 export const SCHEMA: SchemaColumn[] = schemaJson as SchemaColumn[];
+
+interface Hierarchy {
+  l4List: string[];
+  hierarchy: { l1: string; l2: string; l3: string; l4: string }[];
+}
+export const HIERARCHY: Hierarchy = hierarchyJson as Hierarchy;
+export const L4_LIST: string[] = HIERARCHY.l4List;
+
+// L4 categories where Dress Length is meaningful. For everything else (tops,
+// tees, shirts, trousers, etc.) the tool should not fill dress length.
+const DRESS_KEYWORDS = ["dress", "gown", "kaftan", "kurta", "kurti", "lehenga", "saree", "jump suit", "jumpsuit", "ethnic dresses"];
+export function isDressL4(l4: string): boolean {
+  const s = String(l4 || "").toLowerCase();
+  return DRESS_KEYWORDS.some((k) => s.includes(k));
+}
 
 // Mandatory columns that are constrained by an MDD LOV list — these are the
 // fields the tool validates and can auto-fill from the image.
@@ -83,11 +99,17 @@ export const METADATA_HEADER_KEYS = [
 // This bridges trivial vocabulary drift (e.g. "V-Neck" vs "V neck",
 // "Short Sleeves" vs "short sleeves", "Navy  Blue" vs "Navy Blue").
 export function normalizeValue(v: any): string {
-  return String(v ?? "")
+  const base = String(v ?? "")
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ") // punctuation/hyphens -> space
     .replace(/\s+/g, " ")
     .trim();
+  // Fold simple plurals per token so "Short sleeve" == "Short Sleeves",
+  // "Check" == "Checks". Strips a trailing 's' on tokens longer than 3 chars.
+  return base
+    .split(" ")
+    .map((t) => (t.length > 3 && t.endsWith("s") ? t.slice(0, -1) : t))
+    .join(" ");
 }
 
 export function allowedValuesFor(attrId: string): string[] {

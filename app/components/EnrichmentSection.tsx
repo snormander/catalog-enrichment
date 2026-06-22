@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import FileDrop from "./FileDrop";
 import ReportCard from "./ReportCard";
-import { normalizeAllSheets, tablesToXlsxBlob } from "@/lib/parseWorkbook";
-import { runEnrichment, AUDIT_TYPE_COL, AUDIT_CONF_COL } from "@/lib/enrichClient";
+import { normalizeAllSheets, enrichedToL4Blob } from "@/lib/parseWorkbook";
+import { runEnrichment, AUDIT_TYPE_COL, AUDIT_CONF_COL, L4_COL } from "@/lib/enrichClient";
 import { evaluateAccuracy } from "@/lib/accuracy";
 import { MODELS, costForUsage } from "@/lib/cost";
 import { NormalizedTable, RunReport, ProductResult } from "@/lib/types";
@@ -139,7 +139,12 @@ export default function EnrichmentSection() {
 
   function downloadEnriched() {
     if (!enrichedTables.length) return;
-    const blob = tablesToXlsxBlob(enrichedTables, [AUDIT_TYPE_COL, AUDIT_CONF_COL]);
+    // Combine all enriched sheets into one dataset, then split into a Main tab
+    // plus one tab per L4 category.
+    const base = enrichedTables[0];
+    const allRows = enrichedTables.flatMap((t) => t.rows);
+    const combined = { ...base, rows: allRows };
+    const blob = enrichedToL4Blob(combined, L4_COL);
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

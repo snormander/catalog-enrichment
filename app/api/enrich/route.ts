@@ -20,23 +20,33 @@ async function fetchImageInline(url: string) {
   return { mime: mime.split(";")[0], data: buf.toString("base64") };
 }
 
-function buildPrompt(sku: string, fields: any[], metadata: Record<string, string>) {
+function buildPrompt(sku: string, fields: any[], metadata: Record<string, string>, l4List: string[]) {
   const lines = fields.map((f, i) => {
     if (f.freeText || !f.allowedValues || f.allowedValues.length === 0) {
       return `${i + 1}. Field "${f.label}" (id: ${f.attrId}) — current value: ${
         f.currentValue ? `"${f.currentValue}"` : "MISSING"
       }. This is a FREE-TEXT field: return a short, standard value (e.g. for Color a single colour name like "Orange" or "Navy Blue"). Use the image and the product text below.`;
     }
+    const fabricNote =
+      f.attrId === "womenfabric" || f.attrId === "fabricapparel"
+        ? " IMPORTANT: fabric composition is NOT reliably visible in a photo — determine it ONLY from the product text (title/description). If the text does not state a fabric, set confidence below 40 so it is flagged rather than guessed."
+        : "";
     return `${i + 1}. Field "${f.label}" (id: ${f.attrId}) — current value: ${
       f.currentValue ? `"${f.currentValue}"` : "MISSING"
     }; issue: ${f.status}. Choose the single best value ONLY from this allowed list: [${f.allowedValues
       .map((v: string) => `"${v}"`)
-      .join(", ")}].`;
+      .join(", ")}].${fabricNote}`;
   });
 
   const metaText = Object.keys(metadata || {}).length
-    ? "\nProduct text (use this — the title/description often states colour, fit, neck, sleeve, pattern):\n" +
+    ? "\nProduct text (use this — the title/description often states colour, fit, neck, sleeve, pattern, fabric):\n" +
       Object.entries(metadata).map(([k, v]) => `- ${k}: ${v}`).join("\n")
+    : "";
+
+  const l4Text = l4List && l4List.length
+    ? `\nAlso classify this product's L4 category. Pick the single best match ONLY from this list: [${l4List
+        .map((v) => `"${v}"`)
+        .join(", ")}].`
     : "";
 
   return `You are a meticulous catalogue data QA expert for an apparel marketplace.
@@ -48,14 +58,15 @@ Strict rules:
 - Judge ONLY the main garment, not props, models' other clothing, or background.
 - For colour, identify the single DOMINANT colour of the garment.
 - Cross-check the product text: if the title says "Orange Slim Fit Solid High Neck", that strongly indicates colour=Orange, fit=Slim, pattern=Solid, neck=High Neck.
+- Fabric must come from the product text, never guessed from the image.
 - Confidence (integer 0-100): 90-100 only when unmistakable; 50-79 when plausible; under 40 when neither image nor text shows the attribute. Never output high confidence for a guess.
-${metaText}
+${metaText}${l4Text}
 
 Fields:
 ${lines.join("\n")}
 
 Respond with ONLY valid JSON, no markdown, in exactly this shape:
-{"results":[{"attrId":"<id>","value":"<value>","confidence":<0-100>,"reasoning":"<short>"}]}`;
+{"results":[{"attrId":"<id>","value":"<value>","confidence":<0-100>,"reasoning":"<short>"}],"l4":"<one L4 from the list>"}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -69,7 +80,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { model, imageUrls = [], sku = "", fields = [], maxImages = 3, metadata = {} } = body;
+    const { model, imageUrls = [], sku = "", fields = [], maxImages = 3, metadata = {}, l4List = [] } = body;
     if (!fields.length) {
       return NextResponse.json({ results: [], usage: { inputTokens: 0, outputTokens: 0 } });
     }
@@ -88,7 +99,7 @@ export async function POST(req: NextRequest) {
         // skip unreachable images; the model proceeds on remaining ones
       }
     }
-    parts.push({ text: buildPrompt(sku, fields, metadata) });
+    parts.push({ text: buildPrompt(sku, fields, metadata, l4List) });
 
     const payload = {
       contents: [{ role: "user", parts }],
@@ -167,7 +178,7 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({ results, usage });
+    return NextResponse.json({ results, usage, l4: parsed.l4 || null });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "unknown error" }, { status: 500 });
   }
