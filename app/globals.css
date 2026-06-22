@@ -293,3 +293,8 @@ small.dim { color: var(--muted); }
 .rc-conflicts-head { font-size: 12.5px; font-weight: 700; color: #9c1b8c; margin-bottom: 6px; }
 .rc-conflict-line { font-size: 12px; color: #5b5470; line-height: 1.5; }
 @media (max-width: 720px) { .rc-textgrid, .rc-attrgrid { grid-template-columns: 1fr; } }
+
+/* ---------- Text input (settings) ---------- */
+.text-input { width: 100%; padding: 8px 11px; font-size: 13.5px; border: 1px solid var(--line);
+  border-radius: 8px; background: #fff; color: #241d3a; font-family: inherit; }
+.text-input:focus { outline: none; border-color: var(--accent); }

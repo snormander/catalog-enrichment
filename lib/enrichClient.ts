@@ -20,11 +20,10 @@ import {
   METADATA_HEADER_KEYS,
   normalizeHeader,
   L4_LIST,
-  isDressL4,
   isVisualAttr,
   isColorFamilyAttr,
   isColorFreeText,
-  isDressLengthAttr,
+  attrAppliesToL4,
 } from "./referenceData";
 import { findSkuColumn, findImageColumns } from "./parseWorkbook";
 
@@ -76,6 +75,7 @@ export interface EnrichOptions {
   concurrency?: number;        // how many products to process in parallel
   maxImages?: number;          // how many image links per product to send (1-5)
   requestsPerMinute?: number;  // pace API calls to stay under rate limits (0 = unlimited)
+  ageBandDefault?: string;     // optional catalogue default for empty Age Band cells
   onProgress?: (done: number, total: number) => void;
 }
 
@@ -109,6 +109,7 @@ export interface EnrichOutput {
   issuesVisual: number;     // mandatory issues that are visually determinable
   issuesNonVisual: number;  // mandatory issues that are not (flagged)
   visualErrored: number;    // visual issues in rows whose image/API call failed
+  notApplicable: number;    // attributes dropped as N/A to the product's category
   consensusFilled: number;  // blanks filled from style-code group consensus
   consensusFixed: number;   // outlier values corrected to match the group
   erroredRows: number;   // products whose API call failed
@@ -262,6 +263,7 @@ export async function runEnrichment(
   let issuesVisual = 0;
   let issuesNonVisual = 0;
   let visualErrored = 0;
+  let notApplicable = 0;
   let erroredRows = 0;
   let firstError: string | undefined;
   let rowsNoImage = 0;
@@ -372,18 +374,17 @@ export async function runEnrichment(
     const rowL4 = modelL4 || guessL4FromText(metaText);
     enrichedRows[idx][L4_COL] = rowL4;
 
-    // Dress Length only applies to dress-type categories. If this row isn't a
-    // dress and the tool filled dress length, revert it (keep the cell blank).
-    if (!isDressL4(rowL4)) {
-      for (const fr of fieldResults) {
-        if (isDressLengthAttr(fr.attrId) && fr.applied) {
-          enrichedRows[idx][fr.column] = "";
-          fr.applied = false;
-          fr.proposedValue = null;
-          fr.reasoning = "skipped — dress length not applicable to " + (rowL4 || "this category");
-          cellsApplied--;
-          cellsFlagged++;
-        }
+    // Category-aware filter: drop attributes that don't apply to this product's
+    // L4 (e.g. Bra Type / Trouser Type / Dress Length on a dress). Anything the
+    // model filled for a non-applicable attribute is reverted to blank, and the
+    // field is removed so it isn't counted or shown as a gap.
+    for (let k = fieldResults.length - 1; k >= 0; k--) {
+      const fr = fieldResults[k];
+      if (!attrAppliesToL4(fr.attrId, rowL4)) {
+        if (fr.applied) { enrichedRows[idx][fr.column] = ""; cellsApplied--; }
+        else { cellsFlagged--; }
+        notApplicable++;
+        fieldResults.splice(k, 1);
       }
     }
 
@@ -498,6 +499,31 @@ export async function runEnrichment(
     }
   }
 
+  // ---- Age Band default ----
+  // Age Band can't come from an image, and consensus can't help when the whole
+  // column is empty. If the user supplied a catalogue default, fill any Age Band
+  // cell that's still blank (lowest priority — after model and consensus).
+  const abDefault = String(opts.ageBandDefault || "").trim();
+  if (abDefault) {
+    const abCol = table.headers.find((h) => table.columnMap[h] === "ageband");
+    if (abCol) {
+      enrichedRows.forEach((r, idx) => {
+        if (String(r[abCol] ?? "").trim() === "") {
+          r[abCol] = abDefault;
+          cellsApplied++;
+          if (results[idx]) {
+            results[idx].fields.push({
+              column: abCol, attrId: "ageband", proposedValue: abDefault,
+              confidence: 100, reasoning: "catalogue default (Age Band)",
+              applied: true, status: "missing", previousValue: "",
+            });
+            writeAuditCols(r, results[idx].fields);
+          }
+        }
+      });
+    }
+  }
+
   return {
     results,
     enriched: {
@@ -515,6 +541,7 @@ export async function runEnrichment(
     issuesVisual,
     issuesNonVisual,
     visualErrored,
+    notApplicable,
     consensusFilled,
     consensusFixed,
     erroredRows,

@@ -4,6 +4,7 @@
 import mddLovJson from "@/data/mdd_lov.json";
 import schemaJson from "@/data/golden_schema.json";
 import hierarchyJson from "@/data/hierarchy.json";
+import applicabilityJson from "@/data/attr_applicability.json";
 import { SchemaColumn } from "./types";
 
 interface MddLov {
@@ -134,6 +135,22 @@ export function isColorFreeText(attrId: string | null | undefined): boolean {
 }
 export function isDressLengthAttr(attrId: string | null | undefined): boolean {
   return String(attrId || "").toLowerCase().includes("dresslength");
+}
+
+// Attribute → L4 applicability (from the MDD Attribute_Mapping matrix). Lets the
+// tool ignore attributes that don't apply to a product's category (e.g. Bra Type
+// on a dress) instead of treating them as gaps.
+const APPLICABILITY = applicabilityJson as Record<string, string[]>;
+const APPLIC_SETS: Record<string, Set<string>> = {};
+for (const k of Object.keys(APPLICABILITY)) APPLIC_SETS[k] = new Set(APPLICABILITY[k]);
+function normL4(s: string): string {
+  return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+export function attrAppliesToL4(attrId: string | null | undefined, l4: string | null | undefined): boolean {
+  const set = APPLIC_SETS[normL4(l4 || "")];
+  if (!set) return true;        // unknown L4 → don't filter (fail-open)
+  if (!attrId) return true;
+  return set.has(attrId);
 }
 
 export function allowedValuesFor(attrId: string): string[] {

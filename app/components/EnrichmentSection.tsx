@@ -21,6 +21,7 @@ export default function EnrichmentSection() {
   const [concurrency, setConcurrency] = useState(2);
   const [maxImages, setMaxImages] = useState(3);
   const [rpm, setRpm] = useState(10);
+  const [ageBandDefault, setAgeBandDefault] = useState("");
 
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -67,7 +68,7 @@ export default function EnrichmentSection() {
         cellsScanned: 0, cellsWithIssues: 0, cellsApplied: 0, cellsFlagged: 0,
         totalAttrCells: 0, mandatoryCells: 0, issuesVisual: 0, issuesNonVisual: 0,
         visualErrored: 0, erroredRows: 0, inputTokens: 0, outputTokens: 0,
-        consensusFilled: 0, consensusFixed: 0,
+        consensusFilled: 0, consensusFixed: 0, notApplicable: 0,
       };
       let firstError: string | undefined;
       let doneSoFar = 0;
@@ -75,6 +76,7 @@ export default function EnrichmentSection() {
       for (const sheet of sellerSheets) {
         const out = await runEnrichment(sheet, {
           model, threshold, verifyValidValues: verify, concurrency, maxImages, requestsPerMinute: rpm,
+          ageBandDefault,
           onProgress: (d) => setProgress({ done: doneSoFar + d, total: grandTotal }),
         });
         doneSoFar += sheet.rows.length;
@@ -95,6 +97,7 @@ export default function EnrichmentSection() {
         agg.erroredRows += out.erroredRows;
         agg.consensusFilled += out.consensusFilled;
         agg.consensusFixed += out.consensusFixed;
+        agg.notApplicable = (agg.notApplicable || 0) + out.notApplicable;
         agg.inputTokens += out.usage.inputTokens;
         agg.outputTokens += out.usage.outputTokens;
         if (!firstError && out.firstError) firstError = out.firstError;
@@ -246,6 +249,12 @@ export default function EnrichmentSection() {
               <span className="slider-val">{rpm === 0 ? "∞" : rpm}</span>
             </div>
             <small className="dim">Free-tier Flash allows ~10/min. Keep at 10 on a free key; raise it (or set ∞) once billing is enabled.</small>
+          </div>
+          <div className="col">
+            <label className="field">Default Age Band <span className="dim" style={{ fontWeight: 400 }}>(optional)</span></label>
+            <input className="text-input" type="text" value={ageBandDefault} placeholder="e.g. 22-35"
+              onChange={(e) => setAgeBandDefault(e.target.value)} />
+            <small className="dim">Age Band can't be read from an image. If set, any cell still blank after enrichment &amp; consensus is filled with this value.</small>
           </div>
           <div className="col" style={{ display: "flex", alignItems: "center" }}>
             <label style={{ display: "flex", gap: 9, alignItems: "center", fontSize: 13 }}>
