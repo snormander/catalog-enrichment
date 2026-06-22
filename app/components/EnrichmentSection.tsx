@@ -4,6 +4,7 @@ import FileDrop from "./FileDrop";
 import ReportCard from "./ReportCard";
 import { normalizeAllSheets, enrichedToL4Blob } from "@/lib/parseWorkbook";
 import { runEnrichment, AUDIT_TYPE_COL, AUDIT_CONF_COL, L4_COL } from "@/lib/enrichClient";
+import ReviewCards from "./ReviewCards";
 import { evaluateAccuracy } from "@/lib/accuracy";
 import { MODELS, costForUsage } from "@/lib/cost";
 import { NormalizedTable, RunReport, ProductResult } from "@/lib/types";
@@ -283,74 +284,17 @@ export default function EnrichmentSection() {
             two audit columns appended. {applied.length} value{applied.length === 1 ? "" : "s"} filled/corrected.
           </p>
 
-          {/* Changes made — collapsible review pane */}
+          {/* Per-product review — collapsible cards (title, attributes with
+              confidence + source, and vision-vs-seller conflicts). */}
           <details open style={{ marginTop: 8 }}>
             <summary style={{ cursor: "pointer", fontWeight: 650, fontSize: 13.5, color: "var(--accent)" }}>
-              Changes made — {applied.length} filled/corrected (click to {applied.length ? "review" : "expand"})
+              Review changes — {results.length} product{results.length === 1 ? "" : "s"}, {applied.length} value{applied.length === 1 ? "" : "s"} filled/corrected (click to expand)
             </summary>
             <p className="hint" style={{ marginTop: 10 }}>
-              Review what changed without opening the file. “Was” shows the prior value (blank = was missing).
-              Showing up to 250 entries.
+              Each product shows its enriched attributes with confidence and how each value was derived,
+              so you can review without opening the file. Flagged values show the seller's original in brackets.
             </p>
-            <div className="scroll-x">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Sheet</th><th>SKU</th><th>Field</th><th>Status</th>
-                    <th>Was</th><th>Now</th><th className="num">Conf.</th><th>Reasoning</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {applied.slice(0, 250).map((c, i) => (
-                    <tr key={i}>
-                      <td><small className="dim">{c.sheet || "—"}</small></td>
-                      <td className="mono">{c.sku}</td>
-                      <td>{c.column}</td>
-                      <td><span className={"pill " + c.status}>{c.status}</span></td>
-                      <td>{c.previousValue && String(c.previousValue).trim()
-                        ? String(c.previousValue)
-                        : <span className="pill missing">blank</span>}</td>
-                      <td><b>{c.proposedValue}</b></td>
-                      <td className="num">{c.confidence}%</td>
-                      <td><small className="dim">{c.reasoning || "—"}</small></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </details>
-
-          {/* Flagged (not written) — separate collapsible */}
-          <details style={{ marginTop: 12 }}>
-            <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13, color: "var(--muted)" }}>
-              Flagged for review — {changes.length - applied.length} not written (below threshold / non-visual / no image)
-            </summary>
-            <div className="scroll-x" style={{ marginTop: 10 }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Sheet</th><th>SKU</th><th>Field</th><th>Status</th>
-                    <th>Was</th><th>Suggested</th><th className="num">Conf.</th><th>Reasoning</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {changes.filter((c) => !c.applied).slice(0, 250).map((c, i) => (
-                    <tr key={i}>
-                      <td><small className="dim">{c.sheet || "—"}</small></td>
-                      <td className="mono">{c.sku}</td>
-                      <td>{c.column}</td>
-                      <td><span className={"pill " + c.status}>{c.status}</span></td>
-                      <td>{c.previousValue && String(c.previousValue).trim()
-                        ? String(c.previousValue)
-                        : <span className="pill missing">blank</span>}</td>
-                      <td>{c.proposedValue ?? <small className="dim">—</small>}</td>
-                      <td className="num">{c.confidence}%</td>
-                      <td><small className="dim">{c.reasoning || "—"}</small></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ReviewCards results={results} />
           </details>
 
           {results.some((p) => p.error) && (

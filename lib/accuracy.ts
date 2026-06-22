@@ -14,8 +14,9 @@ function attrIdForHeader(header: string): string | null {
   return SCHEMA_NAME_INDEX[n] || HEADER_SYNONYMS[n] || null;
 }
 
-// Build a SKU -> golden row lookup. Maps by attrId so differing column names
-// across the two files still line up.
+// Build a SKU -> golden row lookup. Maps by attrId (preferring the sheet's own
+// #ATTR mapping, falling back to name) so differing column names across the two
+// files still line up.
 function indexGoldenByAttr(golden: NormalizedTable) {
   const skuCol = findSkuColumn(golden);
   const bySku: Record<string, Record<string, any>> = {};
@@ -24,7 +25,7 @@ function indexGoldenByAttr(golden: NormalizedTable) {
     if (!sku) continue;
     const byAttr: Record<string, any> = {};
     for (const h of golden.headers) {
-      const aid = attrIdForHeader(h);
+      const aid = golden.columnMap[h] || attrIdForHeader(h);
       if (aid) byAttr[aid] = row[h];
     }
     bySku[sku] = byAttr;

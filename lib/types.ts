@@ -24,6 +24,7 @@ export interface NormalizedTable {
   rows: Record<string, any>[]; // each row keyed by header name
   // mapping: header name -> schema attrId (or null if unmapped)
   columnMap: Record<string, string | null>;
+  mandatoryMap: Record<string, boolean>; // from the sheet's own MANDATORY row
   rawRowNumbers: number[];     // original sheet row index for each data row
 }
 
@@ -53,6 +54,8 @@ export interface ProductResult {
   sku: string;
   imageUrls: string[];
   fields: FieldResult[];
+  metadata?: Record<string, string>; // title/description/etc. for the review card
+  l4?: string;
   error?: string;
 }
 

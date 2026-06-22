@@ -168,6 +168,23 @@ export function normalizeMatrix(matrix: any[][], sheetName?: string): Normalized
   // char-limit / display name / #ATTR system name). Preserved verbatim.
   const headerBlock = matrix.slice(0, dataStartIndex).map((r) => (r || []).slice());
 
+  // Find the schema row that marks MANDATORY / NON-MANDATORY and read each
+  // column's requirement straight from the uploaded sheet (not a fixed list).
+  let mandRow: any[] | null = null;
+  for (const row of headerBlock) {
+    const toks = (row || []).filter((c) => {
+      const s = String(c ?? "").trim().toUpperCase();
+      return s === "MANDATORY" || s === "NON-MANDATORY" || s === "NON MANDATORY";
+    });
+    if (toks.length >= 3) { mandRow = row; break; }
+  }
+  const mandatoryMap: Record<string, boolean> = {};
+  headers.forEach((h, i) => {
+    mandatoryMap[h] = mandRow
+      ? String(mandRow[i] ?? "").trim().toUpperCase() === "MANDATORY"
+      : false;
+  });
+
   const rows: Record<string, any>[] = [];
   const rawRowNumbers: number[] = [];
   for (let r = dataStartIndex; r < matrix.length; r++) {
@@ -181,7 +198,7 @@ export function normalizeMatrix(matrix: any[][], sheetName?: string): Normalized
     rawRowNumbers.push(r);
   }
 
-  return { sheetName, headerBlock, headerRowIndex, dataStartIndex, headers, rows, columnMap, rawRowNumbers };
+  return { sheetName, headerBlock, headerRowIndex, dataStartIndex, headers, rows, columnMap, mandatoryMap, rawRowNumbers };
 }
 
 export async function normalizeWorkbook(file: File): Promise<NormalizedTable> {
@@ -189,17 +206,16 @@ export async function normalizeWorkbook(file: File): Promise<NormalizedTable> {
   return normalizeMatrix(matrix);
 }
 
-// Parse EVERY sheet in the workbook (each = an L4 category). Sheets with no
-// detectable product rows are skipped.
+// Parse ONLY the first sheet of the workbook (sellers may include extra tabs
+// like QA/Compliance/Category-Mapping — we enrich the first data sheet only).
 export async function normalizeAllSheets(file: File): Promise<NormalizedTable[]> {
   const sheets = await readAllSheets(file);
-  const tables: NormalizedTable[] = [];
   for (const { name, matrix } of sheets) {
     if (!matrix || matrix.length === 0) continue;
     const t = normalizeMatrix(matrix, name);
-    if (t.rows.length > 0) tables.push(t);
+    if (t.rows.length > 0) return [t]; // first sheet that has product rows
   }
-  return tables;
+  return [];
 }
 
 // Find the SKU column name within a normalized table.

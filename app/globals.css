@@ -255,3 +255,41 @@ small.dim { color: var(--muted); }
 .img-name { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .img-dim { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 3px; }
 .img-dl { margin: 0 12px 12px; padding: 7px 12px; font-size: 12.5px; }
+
+/* ---------- Per-product review cards ---------- */
+.rc-list { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.rc { border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff; overflow: hidden; }
+.rc-head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  background: none; border: none; cursor: pointer; text-align: left; }
+.rc-head:hover { background: #faf8fd; }
+.rc-var { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #7b2ff7;
+  background: #efe7fb; border-radius: 6px; padding: 6px 9px; }
+.rc-headmain { flex: 1; min-width: 0; }
+.rc-title { display: block; font-size: 15px; font-weight: 700; color: #241d3a;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-meta { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.rc-vision { color: #b3209f; font-weight: 600; }
+.rc-conf-flag { color: #b97309; font-weight: 600; }
+.rc-badge { font-size: 12px; font-weight: 700; border-radius: 20px; padding: 4px 11px; }
+.rc-badge.hi { background: #e4f5ec; color: #176c47; }
+.rc-badge.mid { background: #fdf2dd; color: #8a5807; }
+.rc-badge.lo { background: #fbe4e4; color: #a12020; }
+.rc-chev { color: var(--muted); font-size: 12px; width: 14px; text-align: center; }
+.rc-body { padding: 4px 16px 18px; border-top: 1px solid var(--line); }
+.rc-textgrid, .rc-attrgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 32px; margin-top: 14px; }
+.rc-field { min-width: 0; }
+.rc-flabel { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #6b6480;
+  text-transform: uppercase; margin-bottom: 3px; }
+.rc-fpct { margin-left: 6px; font-weight: 700; }
+.rc-fpct.hi { color: #1b8a5a; } .rc-fpct.mid { color: #b97309; } .rc-fpct.lo { color: #a12020; }
+.rc-tag { margin-left: 5px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.rc-tag.ok { color: #1b8a5a; } .rc-tag.fix { color: #b3209f; } .rc-tag.warn { color: #b97309; }
+.rc-fval { font-size: 14px; color: #1c1630; font-weight: 600; }
+.rc-fval.rc-desc { font-weight: 400; font-size: 12.5px; line-height: 1.55; color: #4a4360; }
+.rc-blank { color: #c2bcd0; }
+.rc-was { font-weight: 400; font-size: 12px; color: var(--muted); }
+.rc-conflicts { margin-top: 16px; background: #faf6fb; border: 1px solid #ecd9ec;
+  border-radius: var(--radius-sm); padding: 12px 14px; }
+.rc-conflicts-head { font-size: 12.5px; font-weight: 700; color: #9c1b8c; margin-bottom: 6px; }
+.rc-conflict-line { font-size: 12px; color: #5b5470; line-height: 1.5; }
+@media (max-width: 720px) { .rc-textgrid, .rc-attrgrid { grid-template-columns: 1fr; } }

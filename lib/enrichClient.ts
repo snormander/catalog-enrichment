@@ -15,15 +15,16 @@ import {
   MDD,
   isLovValid,
   labelFor,
-  VISUAL_ATTR_IDS,
   NON_VISUAL_ATTR_IDS,
-  MANDATORY_ATTR_IDS,
-  FREE_TEXT_VISUAL_ATTR_IDS,
   METADATA_ATTR_IDS,
   METADATA_HEADER_KEYS,
   normalizeHeader,
   L4_LIST,
   isDressL4,
+  isVisualAttr,
+  isColorFamilyAttr,
+  isColorFreeText,
+  isDressLengthAttr,
 } from "./referenceData";
 import { findSkuColumn, findImageColumns } from "./parseWorkbook";
 
@@ -60,12 +61,12 @@ export function guessL4FromText(text: string): string {
 function classify(attrId: string, value: any): FieldStatus {
   const empty = value === null || value === undefined || String(value).trim() === "";
   if (empty) return "missing";
-  // free-text fields (e.g. Color) have no LOV; if present, leave as-is unless re-verifying
-  if (FREE_TEXT_VISUAL_ATTR_IDS.has(attrId)) {
-    return VISUAL_ATTR_IDS.has(attrId) ? "conflict" : "ok";
+  // free-text fields (e.g. Color) have no LOV; if present, leave as-is
+  if (isColorFreeText(attrId)) {
+    return isVisualAttr(attrId) ? "conflict" : "ok";
   }
   if (!isLovValid(attrId, value)) return "not_lov";
-  return VISUAL_ATTR_IDS.has(attrId) ? "conflict" : "ok";
+  return isVisualAttr(attrId) ? "conflict" : "ok";
 }
 
 export interface EnrichOptions {
@@ -229,14 +230,14 @@ export async function runEnrichment(
     const aid = table.columnMap[h];
     return aid && MDD.lov[aid];
   });
-  // The tool's working set: mandatory LOV columns + mandatory free-text visual
-  // fields (e.g. Color, which has no LOV but should still be filled).
+  // The tool's working set is driven by the UPLOADED SHEET'S OWN mandatory
+  // markers (not a fixed golden list), so it adapts to any seller template:
+  // any column the sheet marks MANDATORY that maps to an LOV attribute, plus
+  // the free-text Color column (filled by mirroring from Color Family).
   const targetCols = table.headers.filter((h) => {
     const aid = table.columnMap[h];
-    if (!aid) return false;
-    if (MDD.lov[aid] && MANDATORY_ATTR_IDS.has(aid)) return true;
-    if (FREE_TEXT_VISUAL_ATTR_IDS.has(aid)) return true; // Color etc.
-    return false;
+    if (!aid || !table.mandatoryMap[h]) return false;
+    return !!MDD.lov[aid] || isColorFreeText(aid);
   });
 
   // Metadata columns (title / name / description / etc.) passed to the model.
@@ -250,8 +251,8 @@ export async function runEnrichment(
   const mandatoryCells = targetCols.length * table.rows.length;
 
   // Color (free text) is mirrored from Color Family (LOV) so it always fills.
-  const colorCol = table.headers.find((h) => table.columnMap[h] === "colorapparel");
-  const colorFamilyCol = table.headers.find((h) => table.columnMap[h] === "colorfamilyapparel");
+  const colorCol = table.headers.find((h) => isColorFreeText(table.columnMap[h]));
+  const colorFamilyCol = table.headers.find((h) => isColorFamilyAttr(table.columnMap[h]));
 
   const usage: TokenUsage = { inputTokens: 0, outputTokens: 0 };
   let cellsScanned = 0;
@@ -375,7 +376,7 @@ export async function runEnrichment(
     // dress and the tool filled dress length, revert it (keep the cell blank).
     if (!isDressL4(rowL4)) {
       for (const fr of fieldResults) {
-        if (fr.attrId === "dresslength" && fr.applied) {
+        if (isDressLengthAttr(fr.attrId) && fr.applied) {
           enrichedRows[idx][fr.column] = "";
           fr.applied = false;
           fr.proposedValue = null;
@@ -393,10 +394,10 @@ export async function runEnrichment(
       if (!curColor && famVal) {
         enrichedRows[idx][colorCol] = famVal;
         cellsApplied++;
-        const famRes = fieldResults.find((fr) => fr.attrId === "colorfamilyapparel");
+        const famRes = fieldResults.find((fr) => isColorFamilyAttr(fr.attrId));
         fieldResults.push({
           column: colorCol,
-          attrId: "colorapparel",
+          attrId: table.columnMap[colorCol] || "colorapparel",
           proposedValue: famVal,
           confidence: famRes ? famRes.confidence : 100,
           reasoning: "Mirrored from Color Family",
@@ -415,6 +416,8 @@ export async function runEnrichment(
       sku: plan.sku,
       imageUrls: plan.imageUrls,
       fields: fieldResults,
+      metadata: plan.metadata,
+      l4: rowL4,
       error,
     };
     done++;

@@ -112,6 +112,30 @@ export function normalizeValue(v: any): string {
     .join(" ");
 }
 
+// Category-agnostic predicates so the tool works across seller templates
+// (men's / women's / ethnic / lingerie), which use different attribute-id
+// prefixes for the same concept (e.g. mensleeve vs womencasualtopwearsleeve).
+const VISUAL_PATTERNS = ["sleeve", "fit", "neck", "collar", "colorfamily", "colourfamily", "pattern", "print", "length", "shape", "silhouette", "rise", "coverage", "padding", "transparency", "hemline", "waistband"];
+export function isVisualAttr(attrId: string | null | undefined): boolean {
+  const a = String(attrId || "").toLowerCase();
+  if (!a || NON_VISUAL_ATTR_IDS.has(a)) return false;
+  return VISUAL_PATTERNS.some((p) => a.includes(p));
+}
+export function isFabricAttr(attrId: string | null | undefined): boolean {
+  return String(attrId || "").toLowerCase().includes("fabric");
+}
+export function isColorFamilyAttr(attrId: string | null | undefined): boolean {
+  const a = String(attrId || "").toLowerCase();
+  return a.includes("colorfamily") || a.includes("colourfamily");
+}
+export function isColorFreeText(attrId: string | null | undefined): boolean {
+  const a = String(attrId || "").toLowerCase();
+  return a === "colorapparel" || a === "colourapparel";
+}
+export function isDressLengthAttr(attrId: string | null | undefined): boolean {
+  return String(attrId || "").toLowerCase().includes("dresslength");
+}
+
 export function allowedValuesFor(attrId: string): string[] {
   return MDD.lov[attrId] || [];
 }

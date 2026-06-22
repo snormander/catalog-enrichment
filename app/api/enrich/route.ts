@@ -28,7 +28,7 @@ function buildPrompt(sku: string, fields: any[], metadata: Record<string, string
       }. This is a FREE-TEXT field: return a short, standard value (e.g. for Color a single colour name like "Orange" or "Navy Blue"). Use the image and the product text below.`;
     }
     const fabricNote =
-      f.attrId === "womenfabric" || f.attrId === "fabricapparel"
+      String(f.attrId || "").toLowerCase().includes("fabric")
         ? " IMPORTANT: fabric composition is NOT reliably visible in a photo — determine it ONLY from the product text (title/description). If the text does not state a fabric, set confidence below 40 so it is flagged rather than guessed."
         : "";
     return `${i + 1}. Field "${f.label}" (id: ${f.attrId}) — current value: ${
