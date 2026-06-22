@@ -16,11 +16,9 @@ import {
   isLovValid,
   labelFor,
   NON_VISUAL_ATTR_IDS,
-  METADATA_ATTR_IDS,
-  METADATA_HEADER_KEYS,
-  normalizeHeader,
   L4_LIST,
   isVisualAttr,
+  isFabricAttr,
   isColorFamilyAttr,
   isColorFreeText,
   attrAppliesToL4,
@@ -70,12 +68,12 @@ function classify(attrId: string, value: any): FieldStatus {
 
 export interface EnrichOptions {
   model: string;
-  threshold: number;
-  verifyValidValues: boolean;
+  fillThreshold: number;       // min confidence to FILL a blank cell
+  conflictThreshold: number;   // min confidence to OVERWRITE an existing value
+  fillAllGaps?: boolean;       // if true, fill every blank regardless of confidence
   concurrency?: number;        // how many products to process in parallel
   maxImages?: number;          // how many image links per product to send (1-5)
   requestsPerMinute?: number;  // pace API calls to stay under rate limits (0 = unlimited)
-  ageBandDefault?: string;     // optional catalogue default for empty Age Band cells
   onProgress?: (done: number, total: number) => void;
 }
 
@@ -116,11 +114,24 @@ export interface EnrichOutput {
   firstError?: string;   // first error message seen (for diagnosis)
 }
 
-function gatherMetadata(table: NormalizedTable, row: Record<string, any>, metaCols: string[]): Record<string, string> {
+// Build the text context passed to the model: include a field if it's MANDATORY
+// in the seller's sheet OR its value is long enough to be descriptive (> 40
+// chars — captures titles/descriptions/tags, skips short codes, SKUs, dates).
+// Image columns and the tool's own columns are excluded. Name-agnostic, so it
+// works no matter what a seller calls their columns.
+const MIN_CONTEXT_LEN = 40;
+function gatherContext(table: NormalizedTable, row: Record<string, any>, imageCols: Set<string>): Record<string, string> {
   const meta: Record<string, string> = {};
-  for (const col of metaCols) {
-    const v = String(row[col] ?? "").trim();
-    if (v) meta[col] = v.slice(0, 400); // cap length
+  let total = 0;
+  for (const h of table.headers) {
+    if (imageCols.has(h) || h.startsWith("_")) continue;
+    const v = String(row[h] ?? "").trim();
+    if (!v) continue;
+    if (table.mandatoryMap[h] || v.length > MIN_CONTEXT_LEN) {
+      meta[h] = v.slice(0, 400);
+      total += meta[h].length;
+      if (total > 4000) break; // cap overall blob size
+    }
   }
   return meta;
 }
@@ -163,13 +174,14 @@ function majority(values: any[]): string | null {
   return best ? best.raw : null;
 }
 
-function planRow(table: NormalizedTable, i: number, targetCols: string[], skuCol: string, imageCols: string[], metaCols: string[], verify: boolean) {
+function planRow(table: NormalizedTable, i: number, targetCols: string[], skuCol: string, imageCols: string[], imageColSet: Set<string>) {
   const row = table.rows[i];
   const sku = String(row[skuCol] ?? "").trim();
   const imageUrls = imageCols
     .map((c) => String(row[c] ?? "").trim())
+    .map((u) => (u.startsWith("//") ? "https:" + u : u))
     .filter((u) => /^https?:\/\//.test(u));
-  const metadata = gatherMetadata(table, row, metaCols);
+  const metadata = gatherContext(table, row, imageColSet);
 
   const visualIssues: any[] = [];
   const flagIssues: any[] = [];
@@ -180,7 +192,8 @@ function planRow(table: NormalizedTable, i: number, targetCols: string[], skuCol
     scanned++;
     const status = classify(attrId, row[col]);
     if (status === "ok") continue;
-    if (status === "conflict" && !verify) continue;
+    // Conflicts (already-filled values) are ALWAYS re-checked against the image;
+    // whether to overwrite is decided later by the conflict threshold.
 
     // Free-text fields (e.g. Color) have no LOV to pick from, so we don't send
     // them to the model with an empty list — they're filled deterministically
@@ -241,12 +254,7 @@ export async function runEnrichment(
     return !!MDD.lov[aid] || isColorFreeText(aid);
   });
 
-  // Metadata columns (title / name / description / etc.) passed to the model.
-  const metaCols = table.headers.filter((h) => {
-    const aid = table.columnMap[h];
-    if (aid && METADATA_ATTR_IDS.includes(aid)) return true;
-    return METADATA_HEADER_KEYS.includes(normalizeHeader(h));
-  });
+  const imageColSet = new Set(imageCols);
 
   const totalAttrCells = allLovCols.length * table.rows.length;
   const mandatoryCells = targetCols.length * table.rows.length;
@@ -274,7 +282,7 @@ export async function runEnrichment(
   let done = 0;
 
   async function processOne(idx: number) {
-    const plan = planRow(table, idx, targetCols, skuCol, imageCols, metaCols, opts.verifyValidValues);
+    const plan = planRow(table, idx, targetCols, skuCol, imageCols, imageColSet);
     cellsScanned += plan.scanned;
     cellsWithIssues += plan.visualIssues.length + plan.flagIssues.length;
     issuesVisual += plan.visualIssues.length;
@@ -325,7 +333,15 @@ export async function runEnrichment(
           usage.outputTokens += data.usage?.outputTokens || 0;
           for (const r of data.results) {
             const issue = plan.visualIssues.find((x: any) => x.attrId === r.attrId);
-            const apply = r.proposedValue != null && r.confidence >= opts.threshold;
+            const isFill = (issue?.status ?? "missing") === "missing";
+            // Blanks: fill if "fill all gaps" is on, else above the fill threshold.
+            // Existing values (conflict / not_lov): only overwrite above the
+            // conflict threshold — never forced by "fill all gaps".
+            const apply = r.proposedValue != null && (
+              isFill
+                ? (opts.fillAllGaps || r.confidence >= opts.fillThreshold)
+                : (r.confidence >= opts.conflictThreshold)
+            );
             if (apply) {
               enrichedRows[idx][r.column] = r.proposedValue;
               cellsApplied++;
@@ -444,10 +460,14 @@ export async function runEnrichment(
   let consensusFixed = 0;
   const styleCol = table.headers.find((h) => table.columnMap[h] === "stylecode");
   if (styleCol) {
-    // Constant-across-size columns: everything the tool targets except Size.
-    const consensusCols = targetCols.filter((h) => {
+    // Constant-across-size columns: everything the tool targets except Size,
+    // plus the free-text Fabric column (so a blank fabric borrows from a sibling).
+    const fabricCol = table.headers.find((h) => isFabricAttr(table.columnMap[h]) && !MDD.lov[table.columnMap[h]!]);
+    const consensusCols = table.headers.filter((h) => {
       const aid = (table.columnMap[h] || "").toLowerCase();
-      return aid && !aid.includes("size");
+      if (!aid || aid.includes("size")) return false;
+      if (h === fabricCol) return true;
+      return targetCols.includes(h);
     });
 
     // Group row indices by style code.
@@ -496,31 +516,6 @@ export async function runEnrichment(
     // Refresh audit columns for rows the consensus pass touched.
     for (const i of changedRows) {
       if (results[i]) writeAuditCols(enrichedRows[i], results[i].fields);
-    }
-  }
-
-  // ---- Age Band default ----
-  // Age Band can't come from an image, and consensus can't help when the whole
-  // column is empty. If the user supplied a catalogue default, fill any Age Band
-  // cell that's still blank (lowest priority — after model and consensus).
-  const abDefault = String(opts.ageBandDefault || "").trim();
-  if (abDefault) {
-    const abCol = table.headers.find((h) => table.columnMap[h] === "ageband");
-    if (abCol) {
-      enrichedRows.forEach((r, idx) => {
-        if (String(r[abCol] ?? "").trim() === "") {
-          r[abCol] = abDefault;
-          cellsApplied++;
-          if (results[idx]) {
-            results[idx].fields.push({
-              column: abCol, attrId: "ageband", proposedValue: abDefault,
-              confidence: 100, reasoning: "catalogue default (Age Band)",
-              applied: true, status: "missing", previousValue: "",
-            });
-            writeAuditCols(r, results[idx].fields);
-          }
-        }
-      });
     }
   }
 

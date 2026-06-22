@@ -52,21 +52,25 @@ function buildPrompt(sku: string, fields: any[], metadata: Record<string, string
   return `You are a meticulous catalogue data QA expert for an apparel marketplace.
 Study the product image(s) for SKU ${sku} AND the product text, then determine the correct value for each field below.
 
+Decision cascade for every field (follow in order):
+1. IMAGE FIRST — for visual attributes (sleeve, neck/collar, fit, colour, pattern, length, shape) decide from the photo. Report your confidence honestly (0-100).
+2. FALL BACK TO TEXT — if the image does not let you decide confidently, use the product text below (title, description, mini-description, tags, etc.).
+3. FALL BACK TO INFERENCE — if neither the image nor the text is conclusive, infer the most likely value and mark it with low confidence so it can be reviewed.
+For fabric and occasion, the TEXT leads (fabric is not visible in a photo); use the image only to corroborate.
+
 Strict rules:
-- For list-constrained fields, pick a value EXACTLY as written in that field's allowed list — copy its spelling, casing and spacing verbatim. Never invent, pluralize, or reformat (e.g. if the list has "Short sleeve", do not return "Short Sleeves").
-- For FREE-TEXT fields (like Color), return a concise standard value; prefer a colour explicitly named in the product text if it matches the image.
+- For list-constrained fields, pick a value EXACTLY as written in that field's allowed list — copy its spelling, casing and spacing verbatim. Never invent, pluralize, or reformat.
+- For FREE-TEXT fields (like Color), return a concise standard value.
 - Judge ONLY the main garment, not props, models' other clothing, or background.
 - For colour, identify the single DOMINANT colour of the garment.
-- Cross-check the product text: if the title says "Orange Slim Fit Solid High Neck", that strongly indicates colour=Orange, fit=Slim, pattern=Solid, neck=High Neck.
-- Fabric must come from the product text, never guessed from the image.
-- Confidence (integer 0-100): 90-100 only when unmistakable; 50-79 when plausible; under 40 when neither image nor text shows the attribute. Never output high confidence for a guess.
+- Confidence (integer 0-100) must reflect the source: high only when the image (or explicit text) makes the value unmistakable; low when inferred. In your reasoning, state the source: "from image", "from text", or "inferred".
 ${metaText}${l4Text}
 
 Fields:
 ${lines.join("\n")}
 
 Respond with ONLY valid JSON, no markdown, in exactly this shape:
-{"results":[{"attrId":"<id>","value":"<value>","confidence":<0-100>,"reasoning":"<short>"}],"l4":"<one L4 from the list>"}`;
+{"results":[{"attrId":"<id>","value":"<value>","confidence":<0-100>,"reasoning":"<short, start with from image|from text|inferred>"}],"l4":"<one L4 from the list>"}`;
 }
 
 export async function POST(req: NextRequest) {

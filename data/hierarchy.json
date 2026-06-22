@@ -1,594 +1,586 @@
 {
- "l4List": [
-  "Formal shirt",
-  "Formal trousers",
-  "Formal suits",
-  "Formal coats & jackets",
-  "T-Shirts",
-  "casual shirts",
-  "Jeans",
-  "Casual trousers",
-  "Shorts",
-  "Sweatshirts and hoodies",
-  "Sweaters",
-  "Casual Jackets",
-  "Blazers",
-  "Track pants",
-  "Sports tshirt",
-  "Sports shorts",
-  "Sports sets",
-  "Sports jackets",
-  "Bottomwear",
-  "Swimwear",
-  "Kurta",
-  "Kurta set with bottom",
-  "Ethnic suits",
-  "Ethnic headgear",
-  "Nehru Jackets",
-  "Sherwani",
-  "Shirts",
-  "Accessories",
-  "Thermals",
-  "Briefs",
-  "Trunks",
-  "Boxers",
-  "Vests",
-  "Sleepwear",
-  "Socks",
-  "Sarees",
-  "Kurta & kurtis",
-  "Suit Sets",
-  "Dress material",
-  "Ethnic bottom",
-  "Duppatta",
-  "Ethnic Dresses",
-  "Lehenga sets",
-  "Blouses",
-  "Kaftans",
-  "Tops and tees",
-  "Casual jackets and blazers",
-  "Casual dresses",
-  "Shrugs and cardigans",
-  "Skirts",
-  "Capris",
-  "Leggings & Jeggings",
-  "Jump suits",
-  "Co-ord set",
-  "Formal coats jackets",
-  "Formal dress",
-  "Maternity Day Wear",
-  "Maternity Lingerie",
-  "Maternity Sleepwear",
-  "Maternity Accessories",
-  "Sports innerwear",
-  "Bras & Bra Sets",
-  "Camisoles & Camisole Sets",
-  "Lingerie Sets",
-  "Corsets & Bustier",
-  "Stockings &Tights",
-  "Shapewear",
-  "Sleepwear & Robes",
-  "Gowns",
-  "Panties",
-  "Intimate wear",
-  "Tshirts",
-  "Sets",
-  "Jeans & pants",
-  "Ethnic",
-  "Winter",
-  "Innerwear and nightwear",
-  "Tees and tops",
-  "Cargos and shorts",
-  "Dresses",
-  "Leggings and Jeggings",
-  "jumpsuits",
-  "Top and bottom sets",
-  "Rompers and body suits"
- ],
- "hierarchy": [
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens formal",
-   "l4": "Formal shirt"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens formal",
-   "l4": "Formal trousers"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens formal",
-   "l4": "Formal suits"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens formal",
-   "l4": "Formal coats & jackets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens casual",
-   "l4": "T-Shirts"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens casual",
-   "l4": "casual shirts"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens casual",
-   "l4": "Jeans"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens casual",
-   "l4": "Casual trousers"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens casual",
-   "l4": "Shorts"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens casual",
-   "l4": "Sweatshirts and hoodies"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens casual",
-   "l4": "Sweaters"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens casual",
-   "l4": "Casual Jackets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens casual",
-   "l4": "Blazers"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens casual",
-   "l4": "Track pants"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Sports",
-   "l4": "Sports tshirt"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Sports",
-   "l4": "Sports shorts"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Sports",
-   "l4": "Sports sets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Sports",
-   "l4": "Sports jackets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Sports",
-   "l4": "Bottomwear"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Sports",
-   "l4": "Swimwear"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Ethnic",
-   "l4": "Kurta"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Ethnic",
-   "l4": "Kurta set with bottom"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Ethnic",
-   "l4": "Ethnic suits"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Ethnic",
-   "l4": "Ethnic headgear"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Ethnic",
-   "l4": "Nehru Jackets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Ethnic",
-   "l4": "Sherwani"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Ethnic",
-   "l4": "Shirts"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Ethnic",
-   "l4": "Accessories"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Innerwear and sleepwear",
-   "l4": "Thermals"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Innerwear and sleepwear",
-   "l4": "Briefs"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Innerwear and sleepwear",
-   "l4": "Trunks"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Innerwear and sleepwear",
-   "l4": "Boxers"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Innerwear and sleepwear",
-   "l4": "Vests"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Mens Innerwear and sleepwear",
-   "l4": "Sleepwear"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Men's Apparel",
-   "l3": "Socks",
-   "l4": "Socks"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Ethnic",
-   "l4": "Sarees"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Ethnic",
-   "l4": "Kurta & kurtis"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Ethnic",
-   "l4": "Suit Sets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Ethnic",
-   "l4": "Dress material"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Ethnic",
-   "l4": "Ethnic bottom"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Ethnic",
-   "l4": "Duppatta"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Ethnic",
-   "l4": "Ethnic Dresses"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Ethnic",
-   "l4": "Lehenga sets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Ethnic",
-   "l4": "Blouses"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Ethnic",
-   "l4": "Kaftans"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Western Wear",
-   "l4": "Tops and tees"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Western Wear",
-   "l4": "Casual jackets and blazers"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Western Wear",
-   "l4": "Casual dresses"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Western Wear",
-   "l4": "Shrugs and cardigans"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Western Wear",
-   "l4": "Skirts"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Western Wear",
-   "l4": "Capris"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Western Wear",
-   "l4": "Leggings & Jeggings"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Western Wear",
-   "l4": "Jump suits"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Western Wear",
-   "l4": "Co-ord set"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women Formal",
-   "l4": "Formal coats jackets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women Formal",
-   "l4": "Formal dress"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women Maternity",
-   "l4": "Maternity Day Wear"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women Maternity",
-   "l4": "Maternity Lingerie"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women Maternity",
-   "l4": "Maternity Sleepwear"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women Maternity",
-   "l4": "Maternity Accessories"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Sports",
-   "l4": "Sports innerwear"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Lingerie",
-   "l4": "Bras & Bra Sets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Lingerie",
-   "l4": "Camisoles & Camisole Sets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Lingerie",
-   "l4": "Lingerie Sets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Lingerie",
-   "l4": "Corsets & Bustier"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Lingerie",
-   "l4": "Stockings &Tights"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Lingerie",
-   "l4": "Shapewear"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Lingerie",
-   "l4": "Sleepwear & Robes"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Lingerie",
-   "l4": "Gowns"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Lingerie",
-   "l4": "Panties"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Women's Apparel",
-   "l3": "Women's Lingerie",
-   "l4": "Intimate wear"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Boys",
-   "l4": "Tshirts"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Boys",
-   "l4": "Sets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Boys",
-   "l4": "Jeans & pants"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Boys",
-   "l4": "Ethnic"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Boys",
-   "l4": "Winter"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Boys",
-   "l4": "Innerwear and nightwear"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Girls",
-   "l4": "Tees and tops"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Girls",
-   "l4": "Cargos and shorts"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Girls",
-   "l4": "Dresses"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Girls",
-   "l4": "Leggings and Jeggings"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Girls",
-   "l4": "jumpsuits"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Infants",
-   "l4": "Top and bottom sets"
-  },
-  {
-   "l1": "Apparel",
-   "l2": "Kids Apparel",
-   "l3": "Infants",
-   "l4": "Rompers and body suits"
-  }
- ]
+"l4List": [
+"3/4Th & Shorts",
+"Accessories",
+"Bermudas & 3/4Th",
+"Blazer & Waist Coats",
+"Blazers",
+"Bloomers",
+"Blouses",
+"Bodysuits/ Rompers",
+"Bottoms",
+"Bottomwear",
+"Boxers",
+"Boys",
+"Boys Clothing",
+"Bras & Bra Sets",
+"Briefs",
+"Camisoles",
+"Camisoles & Camisole Sets",
+"Capris",
+"Cargos",
+"Cargos and shorts",
+"Casual Dresses",
+"Casual Jackets",
+"Casual Tops & Tees",
+"Casual dresses",
+"Casual jackets and blazers",
+"Casual trousers",
+"Clothing Accessories",
+"Clothing Sets",
+"Co-ord set",
+"Coats & Jackets",
+"Combo Sets",
+"Corsets & Bustier",
+"Crop Top",
+"Dress material",
+"Dresses",
+"Dungaree",
+"Duppatta",
+"Ethnic",
+"Ethnic Dresses",
+"Ethnic bottom",
+"Ethnic headgear",
+"Ethnic suits",
+"Formal coats & jackets",
+"Formal coats jackets",
+"Formal dress",
+"Formal shirt",
+"Formal suits",
+"Formal trousers",
+"Girls",
+"Girls Clothing",
+"Gowns",
+"Indowestern",
+"Indowestern Sets",
+"Infant Accessories",
+"Infant Boys Clothing",
+"Infant Girls Clothing",
+"Infants",
+"Innerwear",
+"Innerwear and nightwear",
+"Intimate wear",
+"Jeans",
+"Jeans & pants",
+"Jeggings",
+"Jump suits",
+"Jumpsuit/ Dungaree",
+"Kaftans",
+"Kids Accessories",
+"Kurta",
+"Kurta & kurtis",
+"Kurta Sets",
+"Kurta set with bottom",
+"Kurti/ Kurta/ Anarkali",
+"Leggings",
+"Leggings & Jeggings",
+"Leggings and Jeggings",
+"Lehenga Cholis",
+"Lehenga sets",
+"Lingerie Sets",
+"Maternity Accessories",
+"Maternity Day Wear",
+"Maternity Lingerie",
+"Maternity Sleepwear",
+"Nehru Jackets",
+"Night Suits",
+"Nightwear Bottoms",
+"Nightwear Tops",
+"Panties",
+"Party Dresses",
+"Party Gowns",
+"Party Tops",
+"Polo T-Shirts",
+"Polos",
+"Rain Wear",
+"Rompers and body suits",
+"Sarees",
+"Sets",
+"Shapewear",
+"Sherwani",
+"Shirts",
+"Shorts",
+"Shorts & Skorts",
+"Shrugs",
+"Shrugs and cardigans",
+"Skirts",
+"Skirts / Skorts & Shorts",
+"Sleepwear",
+"Sleepwear & Robes",
+"Socks",
+"Sports Jackets & Hoodies",
+"Sports innerwear",
+"Sports jackets",
+"Sports sets",
+"Sports shorts",
+"Sports tshirt",
+"Stockings &Tights",
+"Suit Sets",
+"Summer Jackets",
+"Sweaters",
+"Sweaters & Cardigans",
+"Sweatshirts & Hoodies",
+"Sweatshirts and hoodies",
+"Swimming Accessories",
+"Swimwear",
+"T-Shirts",
+"T-Shirts & Tanks",
+"Tees and tops",
+"Thermals",
+"Tights",
+"Tights & Leggings",
+"Top and bottom sets",
+"Tops & Tees",
+"Tops and tees",
+"Track Bottoms/ Joggers",
+"Track Suits",
+"Track Tops",
+"Track pants",
+"Trackpants & Joggers",
+"Trousers & Pants",
+"Trunks",
+"Tshirts",
+"Vests",
+"Winter",
+"Women's Apparel",
+"casual shirts",
+"jumpsuits"
+],
+"hierarchy": [
+{
+"l4": "3/4Th & Shorts"
+},
+{
+"l4": "Accessories"
+},
+{
+"l4": "Bermudas & 3/4Th"
+},
+{
+"l4": "Blazer & Waist Coats"
+},
+{
+"l4": "Blazers"
+},
+{
+"l4": "Bloomers"
+},
+{
+"l4": "Blouses"
+},
+{
+"l4": "Bodysuits/ Rompers"
+},
+{
+"l4": "Bottoms"
+},
+{
+"l4": "Bottomwear"
+},
+{
+"l4": "Boxers"
+},
+{
+"l4": "Boys"
+},
+{
+"l4": "Boys Clothing"
+},
+{
+"l4": "Bras & Bra Sets"
+},
+{
+"l4": "Briefs"
+},
+{
+"l4": "Camisoles"
+},
+{
+"l4": "Camisoles & Camisole Sets"
+},
+{
+"l4": "Capris"
+},
+{
+"l4": "Cargos"
+},
+{
+"l4": "Cargos and shorts"
+},
+{
+"l4": "Casual Dresses"
+},
+{
+"l4": "Casual Jackets"
+},
+{
+"l4": "Casual Tops & Tees"
+},
+{
+"l4": "Casual dresses"
+},
+{
+"l4": "Casual jackets and blazers"
+},
+{
+"l4": "Casual trousers"
+},
+{
+"l4": "Clothing Accessories"
+},
+{
+"l4": "Clothing Sets"
+},
+{
+"l4": "Co-ord set"
+},
+{
+"l4": "Coats & Jackets"
+},
+{
+"l4": "Combo Sets"
+},
+{
+"l4": "Corsets & Bustier"
+},
+{
+"l4": "Crop Top"
+},
+{
+"l4": "Dress material"
+},
+{
+"l4": "Dresses"
+},
+{
+"l4": "Dungaree"
+},
+{
+"l4": "Duppatta"
+},
+{
+"l4": "Ethnic"
+},
+{
+"l4": "Ethnic Dresses"
+},
+{
+"l4": "Ethnic bottom"
+},
+{
+"l4": "Ethnic headgear"
+},
+{
+"l4": "Ethnic suits"
+},
+{
+"l4": "Formal coats & jackets"
+},
+{
+"l4": "Formal coats jackets"
+},
+{
+"l4": "Formal dress"
+},
+{
+"l4": "Formal shirt"
+},
+{
+"l4": "Formal suits"
+},
+{
+"l4": "Formal trousers"
+},
+{
+"l4": "Girls"
+},
+{
+"l4": "Girls Clothing"
+},
+{
+"l4": "Gowns"
+},
+{
+"l4": "Indowestern"
+},
+{
+"l4": "Indowestern Sets"
+},
+{
+"l4": "Infant Accessories"
+},
+{
+"l4": "Infant Boys Clothing"
+},
+{
+"l4": "Infant Girls Clothing"
+},
+{
+"l4": "Infants"
+},
+{
+"l4": "Innerwear"
+},
+{
+"l4": "Innerwear and nightwear"
+},
+{
+"l4": "Intimate wear"
+},
+{
+"l4": "Jeans"
+},
+{
+"l4": "Jeans & pants"
+},
+{
+"l4": "Jeggings"
+},
+{
+"l4": "Jump suits"
+},
+{
+"l4": "Jumpsuit/ Dungaree"
+},
+{
+"l4": "Kaftans"
+},
+{
+"l4": "Kids Accessories"
+},
+{
+"l4": "Kurta"
+},
+{
+"l4": "Kurta & kurtis"
+},
+{
+"l4": "Kurta Sets"
+},
+{
+"l4": "Kurta set with bottom"
+},
+{
+"l4": "Kurti/ Kurta/ Anarkali"
+},
+{
+"l4": "Leggings"
+},
+{
+"l4": "Leggings & Jeggings"
+},
+{
+"l4": "Leggings and Jeggings"
+},
+{
+"l4": "Lehenga Cholis"
+},
+{
+"l4": "Lehenga sets"
+},
+{
+"l4": "Lingerie Sets"
+},
+{
+"l4": "Maternity Accessories"
+},
+{
+"l4": "Maternity Day Wear"
+},
+{
+"l4": "Maternity Lingerie"
+},
+{
+"l4": "Maternity Sleepwear"
+},
+{
+"l4": "Nehru Jackets"
+},
+{
+"l4": "Night Suits"
+},
+{
+"l4": "Nightwear Bottoms"
+},
+{
+"l4": "Nightwear Tops"
+},
+{
+"l4": "Panties"
+},
+{
+"l4": "Party Dresses"
+},
+{
+"l4": "Party Gowns"
+},
+{
+"l4": "Party Tops"
+},
+{
+"l4": "Polo T-Shirts"
+},
+{
+"l4": "Polos"
+},
+{
+"l4": "Rain Wear"
+},
+{
+"l4": "Rompers and body suits"
+},
+{
+"l4": "Sarees"
+},
+{
+"l4": "Sets"
+},
+{
+"l4": "Shapewear"
+},
+{
+"l4": "Sherwani"
+},
+{
+"l4": "Shirts"
+},
+{
+"l4": "Shorts"
+},
+{
+"l4": "Shorts & Skorts"
+},
+{
+"l4": "Shrugs"
+},
+{
+"l4": "Shrugs and cardigans"
+},
+{
+"l4": "Skirts"
+},
+{
+"l4": "Skirts / Skorts & Shorts"
+},
+{
+"l4": "Sleepwear"
+},
+{
+"l4": "Sleepwear & Robes"
+},
+{
+"l4": "Socks"
+},
+{
+"l4": "Sports Jackets & Hoodies"
+},
+{
+"l4": "Sports innerwear"
+},
+{
+"l4": "Sports jackets"
+},
+{
+"l4": "Sports sets"
+},
+{
+"l4": "Sports shorts"
+},
+{
+"l4": "Sports tshirt"
+},
+{
+"l4": "Stockings &Tights"
+},
+{
+"l4": "Suit Sets"
+},
+{
+"l4": "Summer Jackets"
+},
+{
+"l4": "Sweaters"
+},
+{
+"l4": "Sweaters & Cardigans"
+},
+{
+"l4": "Sweatshirts & Hoodies"
+},
+{
+"l4": "Sweatshirts and hoodies"
+},
+{
+"l4": "Swimming Accessories"
+},
+{
+"l4": "Swimwear"
+},
+{
+"l4": "T-Shirts"
+},
+{
+"l4": "T-Shirts & Tanks"
+},
+{
+"l4": "Tees and tops"
+},
+{
+"l4": "Thermals"
+},
+{
+"l4": "Tights"
+},
+{
+"l4": "Tights & Leggings"
+},
+{
+"l4": "Top and bottom sets"
+},
+{
+"l4": "Tops & Tees"
+},
+{
+"l4": "Tops and tees"
+},
+{
+"l4": "Track Bottoms/ Joggers"
+},
+{
+"l4": "Track Suits"
+},
+{
+"l4": "Track Tops"
+},
+{
+"l4": "Track pants"
+},
+{
+"l4": "Trackpants & Joggers"
+},
+{
+"l4": "Trousers & Pants"
+},
+{
+"l4": "Trunks"
+},
+{
+"l4": "Tshirts"
+},
+{
+"l4": "Vests"
+},
+{
+"l4": "Winter"
+},
+{
+"l4": "Women's Apparel"
+},
+{
+"l4": "casual shirts"
+},
+{
+"l4": "jumpsuits"
+}
+]
 }

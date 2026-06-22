@@ -298,3 +298,10 @@ small.dim { color: var(--muted); }
 .text-input { width: 100%; padding: 8px 11px; font-size: 13.5px; border: 1px solid var(--line);
   border-radius: 8px; background: #fff; color: #241d3a; font-family: inherit; }
 .text-input:focus { outline: none; border-color: var(--accent); }
+
+/* ---------- Compact dual confidence sliders ---------- */
+.mini-sliders { display: flex; gap: 16px; }
+.mini-slider { display: flex; flex-direction: column; gap: 4px; max-width: 150px; flex: 1; }
+.mini-slider .mini-label { font-size: 11.5px; font-weight: 600; color: #5b5470; }
+.mini-slider input[type="range"] { width: 100%; }
+.mini-slider input[type="range"]:disabled { opacity: 0.4; }

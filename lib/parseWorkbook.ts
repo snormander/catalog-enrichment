@@ -228,11 +228,31 @@ export function findSkuColumn(table: NormalizedTable): string | null {
 }
 
 // Find image-url columns within a normalized table.
+// Detect image columns by their CONTENT (URL-like values), not just the name.
+// A column qualifies if several of its data cells look like image URLs, OR it's
+// name-matched as an image column AND also contains URLs. This works regardless
+// of how a seller names the column and excludes number-only columns like
+// "Image Priority".
+const URL_RE = /^\s*(https?:\/\/|\/\/|www\.|cdn[.\/]|.*\.(jpg|jpeg|png|webp|gif|avif)(\?|$))/i;
+const URLISH = /(https?:\/\/|cdn\.|shopify|cloudinary|akamai|content\.|\.(jpg|jpeg|png|webp|gif|avif))/i;
 export function findImageColumns(table: NormalizedTable): string[] {
-  return table.headers.filter((h) => {
-    const n = normalizeHeader(h);
-    return n.startsWith("image") || n === "productimages";
-  });
+  const out: string[] = [];
+  for (const h of table.headers) {
+    const nameHit = normalizeHeader(h).startsWith("image") || normalizeHeader(h) === "productimages";
+    // sample up to 30 data cells; count URL-like values
+    let urlCount = 0, seen = 0;
+    for (const row of table.rows) {
+      const v = String(row[h] ?? "").trim();
+      if (!v) continue;
+      seen++;
+      if (URL_RE.test(v) || URLISH.test(v)) urlCount++;
+      if (seen >= 30) break;
+    }
+    const hasUrls = seen > 0 && urlCount >= Math.max(1, Math.ceil(seen * 0.5));
+    if (hasUrls) out.push(h);            // URL content is sufficient on its own
+    else if (nameHit && urlCount > 0) out.push(h); // name + at least one URL
+  }
+  return out;
 }
 
 // Build one worksheet AoA preserving the original 5-row schema header block,

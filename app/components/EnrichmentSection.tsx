@@ -16,12 +16,12 @@ export default function EnrichmentSection() {
   const [goldenSheets, setGoldenSheets] = useState<NormalizedTable[]>([]);
 
   const [model, setModel] = useState(MODELS[0].id);
-  const [threshold, setThreshold] = useState(80);
-  const [verify, setVerify] = useState(false);
+  const [fillThreshold, setFillThreshold] = useState(80);
+  const [conflictThreshold, setConflictThreshold] = useState(80);
+  const [fillAllGaps, setFillAllGaps] = useState(true);
   const [concurrency, setConcurrency] = useState(2);
   const [maxImages, setMaxImages] = useState(3);
   const [rpm, setRpm] = useState(10);
-  const [ageBandDefault, setAgeBandDefault] = useState("");
 
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -75,8 +75,8 @@ export default function EnrichmentSection() {
 
       for (const sheet of sellerSheets) {
         const out = await runEnrichment(sheet, {
-          model, threshold, verifyValidValues: verify, concurrency, maxImages, requestsPerMinute: rpm,
-          ageBandDefault,
+          model, fillThreshold, conflictThreshold, fillAllGaps,
+          concurrency, maxImages, requestsPerMinute: rpm,
           onProgress: (d) => setProgress({ done: doneSoFar + d, total: grandTotal }),
         });
         doneSoFar += sheet.rows.length;
@@ -110,7 +110,7 @@ export default function EnrichmentSection() {
       const cost = costForUsage(usage, model);
       const rep: RunReport = {
         fileName: sellerName || "seller.xlsx",
-        model, threshold,
+        model, threshold: fillThreshold,
         productsProcessed: allResults.length,
         cellsScanned: agg.cellsScanned,
         cellsWithIssues: agg.cellsWithIssues,
@@ -210,15 +210,25 @@ export default function EnrichmentSection() {
             </select>
           </div>
           <div className="col">
-            <label className="field">Confidence threshold</label>
-            <div className="slider-wrap">
-              <div className="slider-row">
-                <input type="range" min={0} max={100} value={threshold}
-                  onChange={(e) => setThreshold(+e.target.value)} />
-                <span className="slider-val">{threshold}%</span>
+            <label className="field">Confidence thresholds</label>
+            <div className="mini-sliders">
+              <div className="mini-slider">
+                <span className="mini-label">Fill {fillThreshold}%</span>
+                <input type="range" min={0} max={100} value={fillThreshold}
+                  disabled={fillAllGaps}
+                  onChange={(e) => setFillThreshold(+e.target.value)} />
               </div>
-              <small className="dim">Values below this are flagged for human review, not written.</small>
+              <div className="mini-slider">
+                <span className="mini-label">Conflict {conflictThreshold}%</span>
+                <input type="range" min={0} max={100} value={conflictThreshold}
+                  onChange={(e) => setConflictThreshold(+e.target.value)} />
+              </div>
             </div>
+            <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12.5, marginTop: 8 }}>
+              <input type="checkbox" checked={fillAllGaps} onChange={(e) => setFillAllGaps(e.target.checked)} />
+              Fill all gaps regardless of confidence
+            </label>
+            <small className="dim">Fill = blank cells; Conflict = overwriting an existing value (always checked). Conflicts always respect their threshold, even when “fill all gaps” is on.</small>
           </div>
         </div>
         <div className="gap" />
@@ -249,18 +259,6 @@ export default function EnrichmentSection() {
               <span className="slider-val">{rpm === 0 ? "∞" : rpm}</span>
             </div>
             <small className="dim">Free-tier Flash allows ~10/min. Keep at 10 on a free key; raise it (or set ∞) once billing is enabled.</small>
-          </div>
-          <div className="col">
-            <label className="field">Default Age Band <span className="dim" style={{ fontWeight: 400 }}>(optional)</span></label>
-            <input className="text-input" type="text" value={ageBandDefault} placeholder="e.g. 22-35"
-              onChange={(e) => setAgeBandDefault(e.target.value)} />
-            <small className="dim">Age Band can't be read from an image. If set, any cell still blank after enrichment &amp; consensus is filled with this value.</small>
-          </div>
-          <div className="col" style={{ display: "flex", alignItems: "center" }}>
-            <label style={{ display: "flex", gap: 9, alignItems: "center", fontSize: 13 }}>
-              <input type="checkbox" checked={verify} onChange={(e) => setVerify(e.target.checked)} />
-              Re-verify already-valid visual fields against the image (more accurate, higher cost)
-            </label>
           </div>
         </div>
 
