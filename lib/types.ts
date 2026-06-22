@@ -90,6 +90,8 @@ export interface RunReport {
   cellsWithIssues: number;
   cellsApplied: number;      // changes written (>= threshold)
   cellsFlagged: number;      // issues left for human (< threshold)
+  consensusFilled?: number;  // blanks filled from style-code group consensus
+  consensusFixed?: number;   // outliers corrected to match the group
   erroredRows: number;       // products that failed (bad image / API error)
   firstError?: string;       // first error message seen, for diagnosis
   funnel: DataFunnel;

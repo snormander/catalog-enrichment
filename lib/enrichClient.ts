@@ -108,6 +108,8 @@ export interface EnrichOutput {
   issuesVisual: number;     // mandatory issues that are visually determinable
   issuesNonVisual: number;  // mandatory issues that are not (flagged)
   visualErrored: number;    // visual issues in rows whose image/API call failed
+  consensusFilled: number;  // blanks filled from style-code group consensus
+  consensusFixed: number;   // outlier values corrected to match the group
   erroredRows: number;   // products whose API call failed
   firstError?: string;   // first error message seen (for diagnosis)
 }
@@ -119,6 +121,44 @@ function gatherMetadata(table: NormalizedTable, row: Record<string, any>, metaCo
     if (v) meta[col] = v.slice(0, 400); // cap length
   }
   return meta;
+}
+
+// Re-usable audit-column writer (also called after the group-consensus pass).
+function writeAuditCols(row: Record<string, any>, fields: FieldResult[]) {
+  const typeParts: string[] = [];
+  const confParts: string[] = [];
+  for (const f of fields) {
+    const kind = NON_VISUAL_ATTR_IDS.has(f.attrId) ? "non-visual" : "visual";
+    typeParts.push(`${f.column}: ${kind}`);
+    if (f.reasoning && f.reasoning.startsWith("group consensus")) {
+      confParts.push(`${f.column}: group-filled`);
+    } else if (f.applied) {
+      confParts.push(`${f.column}: ${f.confidence}% (filled)`);
+    } else if (kind === "non-visual") {
+      confParts.push(`${f.column}: flagged`);
+    } else {
+      confParts.push(`${f.column}: ${f.confidence}% (flagged)`);
+    }
+  }
+  row[AUDIT_TYPE_COL] = typeParts.join("; ");
+  row[AUDIT_CONF_COL] = confParts.join("; ");
+}
+
+// Majority value among non-blank strings (case-insensitive grouping, returns
+// the most common original spelling). Null if there are no non-blank values.
+function majority(values: any[]): string | null {
+  const counts = new Map<string, { raw: string; n: number }>();
+  for (const v of values) {
+    const s = String(v ?? "").trim();
+    if (!s) continue;
+    const k = s.toLowerCase();
+    const e = counts.get(k);
+    if (e) e.n++;
+    else counts.set(k, { raw: s, n: 1 });
+  }
+  let best: { raw: string; n: number } | null = null;
+  for (const e of counts.values()) if (!best || e.n > best.n) best = e;
+  return best ? best.raw : null;
 }
 
 function planRow(table: NormalizedTable, i: number, targetCols: string[], skuCol: string, imageCols: string[], metaCols: string[], verify: boolean) {
@@ -367,19 +407,8 @@ export async function runEnrichment(
       }
     }
 
-    // Audit columns: list each field the tool acted on (filled or flagged),
-    // with its visual/non-visual type and confidence. Blank if nothing acted on.
-    const typeParts: string[] = [];
-    const confParts: string[] = [];
-    for (const f of fieldResults) {
-      const kind = NON_VISUAL_ATTR_IDS.has(f.attrId) ? "non-visual" : "visual";
-      typeParts.push(`${f.column}: ${kind}`);
-      if (f.applied) confParts.push(`${f.column}: ${f.confidence}% (filled)`);
-      else if (kind === "non-visual") confParts.push(`${f.column}: flagged`);
-      else confParts.push(`${f.column}: ${f.confidence}% (flagged)`);
-    }
-    enrichedRows[idx][AUDIT_TYPE_COL] = typeParts.join("; ");
-    enrichedRows[idx][AUDIT_CONF_COL] = confParts.join("; ");
+    // Audit columns: list each field the tool acted on (filled or flagged).
+    writeAuditCols(enrichedRows[idx], fieldResults);
 
     results[idx] = {
       rowNumber: table.rawRowNumbers[idx],
@@ -401,6 +430,71 @@ export async function runEnrichment(
   }
   await Promise.all(Array.from({ length: Math.min(concurrency, total) }, () => worker()));
 
+  // ---- Group-consensus pass (deterministic, no API) ----
+  // Products that share a Style Code are size variants of the same garment, so
+  // every attribute except Size is constant across them. For each style group
+  // we take the majority value and apply it to the whole group — filling blanks
+  // AND correcting isolated wrong guesses. A catalogue-wide majority backfills
+  // non-visual fields (Age Band, Occasion) for groups that are entirely blank.
+  let consensusFilled = 0;
+  let consensusFixed = 0;
+  const styleCol = table.headers.find((h) => table.columnMap[h] === "stylecode");
+  if (styleCol) {
+    // Constant-across-size columns: everything the tool targets except Size.
+    const consensusCols = targetCols.filter((h) => {
+      const aid = (table.columnMap[h] || "").toLowerCase();
+      return aid && !aid.includes("size");
+    });
+
+    // Group row indices by style code.
+    const groups = new Map<string, number[]>();
+    enrichedRows.forEach((r, idx) => {
+      const code = String(r[styleCol] ?? "").trim();
+      if (!code) return;
+      (groups.get(code) || groups.set(code, []).get(code)!).push(idx);
+    });
+
+    // Catalogue-wide majority per column (for the all-blank fallback).
+    const catMode: Record<string, string | null> = {};
+    for (const col of consensusCols) catMode[col] = majority(enrichedRows.map((r) => r[col]));
+
+    const changedRows = new Set<number>();
+    for (const [, idxs] of groups) {
+      if (idxs.length < 2) continue;
+      for (const col of consensusCols) {
+        const attrId = table.columnMap[col]!;
+        let target = majority(idxs.map((i) => enrichedRows[i][col]));
+        // all-blank group: only backfill non-visual fields from catalogue mode
+        if (!target && NON_VISUAL_ATTR_IDS.has(attrId)) target = catMode[col];
+        if (!target) continue;
+        for (const i of idxs) {
+          const cur = String(enrichedRows[i][col] ?? "").trim();
+          if (cur.toLowerCase() === target.toLowerCase()) continue;
+          const wasBlank = cur === "";
+          enrichedRows[i][col] = target;
+          if (wasBlank) consensusFilled++; else consensusFixed++;
+          changedRows.add(i);
+          results[i]?.fields.push({
+            column: col,
+            attrId,
+            proposedValue: target,
+            confidence: 100,
+            reasoning: wasBlank
+              ? "group consensus — filled from same style-code siblings"
+              : `group consensus — corrected "${cur}" to match style-code siblings`,
+            applied: true,
+            status: wasBlank ? "missing" : "conflict",
+            previousValue: cur,
+          });
+        }
+      }
+    }
+    // Refresh audit columns for rows the consensus pass touched.
+    for (const i of changedRows) {
+      if (results[i]) writeAuditCols(enrichedRows[i], results[i].fields);
+    }
+  }
+
   return {
     results,
     enriched: {
@@ -418,6 +512,8 @@ export async function runEnrichment(
     issuesVisual,
     issuesNonVisual,
     visualErrored,
+    consensusFilled,
+    consensusFixed,
     erroredRows,
     firstError,
   };

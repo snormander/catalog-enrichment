@@ -66,6 +66,7 @@ export default function EnrichmentSection() {
         cellsScanned: 0, cellsWithIssues: 0, cellsApplied: 0, cellsFlagged: 0,
         totalAttrCells: 0, mandatoryCells: 0, issuesVisual: 0, issuesNonVisual: 0,
         visualErrored: 0, erroredRows: 0, inputTokens: 0, outputTokens: 0,
+        consensusFilled: 0, consensusFixed: 0,
       };
       let firstError: string | undefined;
       let doneSoFar = 0;
@@ -91,6 +92,8 @@ export default function EnrichmentSection() {
         agg.issuesNonVisual += out.issuesNonVisual;
         agg.visualErrored += out.visualErrored;
         agg.erroredRows += out.erroredRows;
+        agg.consensusFilled += out.consensusFilled;
+        agg.consensusFixed += out.consensusFixed;
         agg.inputTokens += out.usage.inputTokens;
         agg.outputTokens += out.usage.outputTokens;
         if (!firstError && out.firstError) firstError = out.firstError;
@@ -111,6 +114,8 @@ export default function EnrichmentSection() {
         cellsFlagged: agg.cellsFlagged,
         erroredRows: agg.erroredRows,
         firstError,
+        consensusFilled: agg.consensusFilled,
+        consensusFixed: agg.consensusFixed,
         funnel: {
           totalAttrCells: agg.totalAttrCells,
           mandatoryCells: agg.mandatoryCells,

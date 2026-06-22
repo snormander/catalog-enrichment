@@ -23,6 +23,9 @@ export default function ReportCard({ report }: { report: RunReport }) {
         <div className="metric warn"><div className="k">Issues found</div><div className="v">{report.cellsWithIssues}</div></div>
         <div className="metric ok"><div className="k">Auto-filled</div><div className="v">{report.cellsApplied}</div></div>
         <div className="metric"><div className="k">Flagged for review</div><div className="v">{report.cellsFlagged}</div></div>
+        {(report.consensusFilled || report.consensusFixed) ? (
+          <div className="metric ok"><div className="k">Group-consensus</div><div className="v">{(report.consensusFilled || 0) + (report.consensusFixed || 0)}<small> filled/fixed</small></div></div>
+        ) : null}
         <div className="metric bad"><div className="k">Rows errored</div><div className="v">{report.erroredRows}</div></div>
       </div>
 
