@@ -2,10 +2,11 @@
 import React, { useState } from "react";
 import SimulatorSection from "./components/SimulatorSection";
 import EnrichmentSection from "./components/EnrichmentSection";
+import CanonicalSection from "./components/CanonicalSection";
 import EmailSection from "./components/EmailSection";
 import ImageStudioSection from "./components/ImageStudioSection";
 
-type Tab = "enrich" | "email" | "studio" | "simulate";
+type Tab = "enrich" | "canonical" | "email" | "studio" | "simulate";
 
 export default function Page() {
   const [tab, setTab] = useState<Tab>("enrich");
@@ -14,6 +15,9 @@ export default function Page() {
       <nav className="tabbar">
         <button className="tab" data-active={tab === "enrich"} onClick={() => setTab("enrich")}>
           Enrichment Dashboard
+        </button>
+        <button className="tab" data-active={tab === "canonical"} onClick={() => setTab("canonical")}>
+          100% Fill <span className="badge">New</span>
         </button>
         <button className="tab" data-active={tab === "email"} onClick={() => setTab("email")}>
           Fetch from Email <span className="badge">Soon</span>
@@ -28,6 +32,7 @@ export default function Page() {
       </nav>
       <main className="shell">
         {tab === "enrich" && <EnrichmentSection />}
+        {tab === "canonical" && <CanonicalSection />}
         {tab === "email" && <EmailSection />}
         {tab === "studio" && <ImageStudioSection />}
         {tab === "simulate" && <SimulatorSection />}
