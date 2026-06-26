@@ -25,6 +25,7 @@ export default function EnrichmentSection() {
   const [report, setReport] = useState<GenReport | null>(null);
   const [accuracy, setAccuracy] = useState<CanonicalAccuracy | null>(null);
   const [cost, setCost] = useState<{ usd: number; inr: number } | null>(null);
+  const [usage, setUsage] = useState<{ inputTokens: number; outputTokens: number } | null>(null);
   const [rows, setRows] = useState<GenRow[]>([]);
   const [results, setResults] = useState<ProductResult[]>([]);
   const [err, setErr] = useState<string | null>(null);
@@ -51,7 +52,7 @@ export default function EnrichmentSection() {
 
   async function run() {
     if (!sellerSheets.length) return;
-    setBusy(true); setErr(null); setReport(null); setRows([]); setResults([]); setAccuracy(null); setCost(null);
+    setBusy(true); setErr(null); setReport(null); setRows([]); setResults([]); setAccuracy(null); setCost(null); setUsage(null);
     setProgress({ done: 0, total: sellerSheets[0].rows.length });
     try {
       // Process the first (primary) data sheet; combined templates carry all
@@ -66,6 +67,7 @@ export default function EnrichmentSection() {
       setResults(genRowsToResults(rows));
       setReport(report);
       setCost(costForUsage(usage, model));
+      setUsage(usage);
       const g = mergedGolden();
       if (g) setAccuracy(evaluateCanonical(g, rows));
     } catch (e: any) {
@@ -191,9 +193,16 @@ export default function EnrichmentSection() {
             <Stat label="Missing fields filled" value={filledTotal} />
             <Stat label="Conflicts changed" value={report.conflictsChanged} />
             <Stat label="Conflicts flagged" value={report.conflictsFlagged} />
-            {cost && <Stat label="Est. cost" value={`$${cost.usd.toFixed(4)}`} />}
+            {usage && <Stat label="Input tokens" value={usage.inputTokens.toLocaleString()} />}
+            {usage && <Stat label="Output tokens" value={usage.outputTokens.toLocaleString()} />}
+            {cost && <Stat label="Total cost — this upload" value={`₹${cost.inr.toFixed(2)}`} />}
             {accuracy && <Stat label="Accuracy" value={`${(accuracy.accuracy * 100).toFixed(1)}%`} />}
           </div>
+          {cost && (
+            <small className="dim" style={{ display: "block", marginTop: 8 }}>
+              Cost is the total for enriching this entire upload (all style codes combined), at ₹95/$. Tokens shown are the totals sent to and received from the model across all AI calls.
+            </small>
+          )}
 
           <div className="gap" />
           <h3>Missing-field fills — by source × requirement</h3>

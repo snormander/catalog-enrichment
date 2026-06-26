@@ -16,7 +16,7 @@ export const MODELS: ModelDef[] = [
   { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro", inputPerM: 1.25, outputPerM: 10.0 },
 ];
 
-export const USD_TO_INR = 83.5; // adjust to current FX if needed
+export const USD_TO_INR = 95; // adjust to current FX if needed
 
 export function modelById(id: string): ModelDef {
   return MODELS.find((m) => m.id === id) || MODELS[0];
