@@ -73,7 +73,7 @@ export default function EmailSection() {
 function EmailFlow() {
   // Self-contained SVG flow using the Tata CLiQ gradient.
   return (
-    <svg viewBox="0 0 1080 250" width="100%" style={{ minWidth: 880, maxWidth: 1080 }}
+    <svg viewBox="0 0 1230 280" width="100%" style={{ minWidth: 1000, maxWidth: 1230 }}
       xmlns="http://www.w3.org/2000/svg" fontFamily="Inter, system-ui, sans-serif">
       <defs>
         <linearGradient id="cliqGrad" x1="0" y1="0" x2="1" y2="0">
@@ -88,29 +88,32 @@ function EmailFlow() {
 
       {[
         { x: 20, t: "Seller emails", d: "10–15 Gmail inboxes receive seller sheets", icon: "✉" },
-        { x: 233, t: "Filter by subject", d: "Match the trigger subject line", icon: "⌕" },
-        { x: 446, t: "Extract attachment", d: "Pull .xlsx / .csv into a queue", icon: "▤" },
-        { x: 659, t: "Auto-enrich", d: "Run the enrichment engine per sheet", icon: "✦" },
-        { x: 872, t: "Save to database", d: "Store enriched records + audit", icon: "▥" },
+        { x: 262, t: "Filter by subject", d: "Match the trigger subject line", icon: "⌕" },
+        { x: 504, t: "Extract attachment", d: "Pull .xlsx / .csv into a queue", icon: "▤" },
+        { x: 746, t: "Auto-enrich", d: "Run the enrichment engine per sheet", icon: "✦" },
+        { x: 988, t: "Save to database", d: "Store enriched records + audit", icon: "▥" },
       ].map((s, i) => (
         <g key={i}>
-          <rect x={s.x} y={70} width={188} height={110} rx={14} fill="#fff"
+          <rect x={s.x} y={66} width={212} height={138} rx={14} fill="#fff"
             stroke="#e7e3ef" strokeWidth={1.5} />
-          <rect x={s.x} y={70} width={188} height={5} rx={2.5} fill="url(#cliqGrad)" />
-          <circle cx={s.x + 32} cy={108} r={16} fill="#f7e7f3" />
-          <text x={s.x + 32} y={114} textAnchor="middle" fontSize="16" fill="#b3209f">{s.icon}</text>
-          <text x={s.x + 58} y={106} fontSize="14" fontWeight="650" fill="#241d3a">{s.t}</text>
-          <foreignObject x={s.x + 14} y={124} width={160} height={50}>
+          <rect x={s.x} y={66} width={212} height={5} rx={2.5} fill="url(#cliqGrad)" />
+          <circle cx={s.x + 32} cy={104} r={16} fill="#f7e7f3" />
+          <text x={s.x + 32} y={110} textAnchor="middle" fontSize="16" fill="#b3209f">{s.icon}</text>
+          <foreignObject x={s.x + 54} y={86} width={148} height={44}>
+            <div style={{ fontSize: 13.5, fontWeight: 650, color: "#241d3a", lineHeight: 1.2 }}>{s.t}</div>
+          </foreignObject>
+          <foreignObject x={s.x + 16} y={134} width={182} height={60}>
             <div style={{ fontSize: 11.5, color: "#6b6480", lineHeight: 1.35 }}>{s.d}</div>
           </foreignObject>
           {i < 4 && (
-            <line x1={s.x + 188} y1={125} x2={s.x + 213} y2={125}
+            <line x1={s.x + 212} y1={130} x2={s.x + 250} y2={130}
               stroke="#b3209f" strokeWidth={2} markerEnd="url(#fa)" />
           )}
         </g>
       ))}
-      <text x={540} y={222} textAnchor="middle" fontSize="11.5" fill="#6b6480">
-        Sheets flagged as low-confidence during enrichment are routed to “Needs review” instead of being saved automatically.
+      <text textAnchor="middle" fontSize="11.5" fill="#6b6480">
+        <tspan x={615} y={244}>Sheets flagged as low-confidence during enrichment are routed to</tspan>
+        <tspan x={615} y={262}>“Needs review” instead of being saved automatically.</tspan>
       </text>
     </svg>
   );

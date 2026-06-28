@@ -52,17 +52,17 @@ export function buildCopy(fields: Fields, l4: string, meta: Record<string, strin
   const tags = [productType, color, pattern, fit, fabric, brand].filter(Boolean).join(", ").slice(0, 100);
 
   return {
-    title:           { name: "PRODUCT TITLE", value: title, mandatory: true },
-    name:            { name: "PRODUCT NAME", value: title, mandatory: true },
-    description:     { name: "PRODUCT DESCRIPTION", value: description, mandatory: true },
-    stylenote:       { name: "Style Note", value: description, mandatory: true },
+    title:           { name: "PRODUCT TITLE", value: title.slice(0, 100), mandatory: true },
+    name:            { name: "PRODUCT NAME", value: title.slice(0, 200), mandatory: true },
+    description:     { name: "PRODUCT DESCRIPTION", value: description.slice(0, 600), mandatory: true },
+    stylenote:       { name: "Style Note", value: description.slice(0, 600), mandatory: true },
     minidescription: { name: "PRODUCT MINIDESCRIPTION", value: description.slice(0, 150) },
-    metatitle:       { name: "PRODUCT METATITLE", value: title },
-    metakeyword:     { name: "PRODUCT METAKEYWORD", value: tags },
+    metatitle:       { name: "PRODUCT METATITLE", value: title.slice(0, 100) },
+    metakeyword:     { name: "PRODUCT METAKEYWORD", value: tags.slice(0, 100) },
     metadescription: { name: "PRODUCT METADESCRIPTION", value: description.slice(0, 200) },
-    tags:            { name: "PRODUCT TAGS", value: tags },
-    genericName:     { name: "Generic Name", value: productType, mandatory: true },
-    displayproduct:  { name: "Display Product Name", value: title },
+    tags:            { name: "PRODUCT TAGS", value: tags.slice(0, 100) },
+    genericName:     { name: "Generic Name", value: productType.slice(0, 50), mandatory: true },
+    displayproduct:  { name: "Display Product Name", value: title.slice(0, 100) },
   };
 }
 

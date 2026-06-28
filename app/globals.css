@@ -318,3 +318,10 @@ small.dim { color: var(--muted); }
 .mini-table th, .mini-table td { text-align: left; padding: 7px 12px; border-bottom: 1px solid var(--border, #ece8f3); }
 .mini-table th { color: #5b5470; font-weight: 600; }
 .mini-table td:not(:first-child), .mini-table th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- Compact stacked sliders in run settings ---------- */
+.settings-sliders { display: flex; flex-direction: column; gap: 12px; }
+.settings-sliders .mini-control .field { font-size: 12.5px; margin-bottom: 2px; }
+.settings-sliders .mini-control .slider-row { gap: 8px; }
+.settings-sliders .mini-control input[type="range"] { height: 4px; }
+.settings-sliders .mini-control small.dim { font-size: 11px; line-height: 1.35; display: block; margin-top: 2px; }

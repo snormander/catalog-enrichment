@@ -18,6 +18,7 @@ import { findImageColumns, findSkuColumn } from "./parseWorkbook";
 import l4AttrsJson from "@/data/l4_attributes.json";
 import { buildCopy } from "./copyTemplates";
 import { DEFAULTS, defaultFor } from "./defaults";
+import { ENVELOPE } from "./envelope";
 
 interface AttrMeta { name: string; mandatory: boolean; concept: string }
 interface L4Entry { l4: string; mandatory: string[]; optional: string[] }
@@ -44,6 +45,7 @@ export interface GenRow {
   l4: string;
   fields: Record<string, GenField>;
   imageUrls: string[];
+  envelope: Record<string, string>;  // seller-sourced envelope values (hsn, weight, dims…)
 }
 
 export interface GenReport {
@@ -339,12 +341,22 @@ export function generateRows(table: NormalizedTable, opts: GenOptions): { rows: 
         }
       }
 
+      // capture seller-sourced envelope values (hsn, weight, dimensions, …)
+      const envelope: Record<string, string> = {};
+      for (const col of ENVELOPE) {
+        if (col.fill === "seller" && col.from) {
+          const sc = idx.byConcept[col.from] || idx.byCode[col.from];
+          if (sc) envelope[col.key] = String(row[sc] ?? "").trim();
+        }
+      }
+
       out[ri] = {
         sku: skuCol ? String(row[skuCol] ?? "").trim() : "",
         styleCode: styleKey,
         l4: entry.l4,
         fields,
         imageUrls: imgCols.map((c) => String(row[c] ?? "").trim()).filter((u) => /^https?:\/\//.test(u)),
+        envelope,
       };
     }
   }

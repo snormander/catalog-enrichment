@@ -107,11 +107,11 @@ export default function EnrichmentSection() {
           <strong> style code</strong> (sizes share the call); each value carries a source &amp; confidence tag.
           Upload a corrected sheet in the same schema to score accuracy.
         </p>
-        <div className="row">
-          <div className="col"><FileDrop label="Seller data (to enrich)" onFile={onSeller} fileName={sellerName} /></div>
-          <div className="col">
-            <FileDrop label="Golden data — for accuracy" optional onFile={onGolden} fileName={goldenName}
-              hint="Upload a corrected sheet (same schema) to score accuracy; skip to enrich only" />
+        <div className="row" style={{ alignItems: "flex-start" }}>
+          <div className="col" style={{ flex: 3 }}><FileDrop label="Seller data (to enrich)" onFile={onSeller} fileName={sellerName} /></div>
+          <div className="col" style={{ flex: 1.4 }}>
+            <FileDrop label="Correct data — for accuracy" optional onFile={onGolden} fileName={goldenName}
+              hint="Optional · corrected sheet in the same schema" />
           </div>
         </div>
         {sellerSheets.length > 0 && (
@@ -125,8 +125,8 @@ export default function EnrichmentSection() {
       <div className="card">
         <span className="section-eyebrow">Configuration</span>
         <h2>Run settings</h2>
-        <div className="row">
-          <div className="col">
+        <div className="row" style={{ alignItems: "flex-start" }}>
+          <div className="col" style={{ flex: 1 }}>
             <label className="field">Model</label>
             <select value={model} onChange={(e) => setModel(e.target.value)}>
               {MODELS.map((m) => (
@@ -134,35 +134,34 @@ export default function EnrichmentSection() {
               ))}
             </select>
           </div>
-          <div className="col">
-            <label className="field">Conflict confidence — {conflictThreshold}%</label>
-            <div className="slider-row">
-              <input type="range" min={0} max={100} value={conflictThreshold}
-                onChange={(e) => setConflictThreshold(+e.target.value)} />
-              <span className="slider-val">{conflictThreshold}%</span>
+          <div className="col settings-sliders" style={{ flex: 1 }}>
+            <div className="mini-control">
+              <label className="field">Conflict confidence — {conflictThreshold}%</label>
+              <div className="slider-row">
+                <input type="range" min={0} max={100} value={conflictThreshold}
+                  onChange={(e) => setConflictThreshold(+e.target.value)} />
+                <span className="slider-val">{conflictThreshold}%</span>
+              </div>
+              <small className="dim">Above this, the image overrides a seller value (logged as changed); below, it's kept and flagged. Blank fields are always filled.</small>
             </div>
-            <small className="dim">Above this, the image overrides a seller value (logged as changed); below, the seller value is kept and the disagreement is flagged. Blank fields are always filled.</small>
-          </div>
-        </div>
-        <div className="gap" />
-        <div className="row">
-          <div className="col">
-            <label className="field">Images per style — {maxImages}</label>
-            <div className="slider-row">
-              <input type="range" min={1} max={5} value={maxImages}
-                onChange={(e) => setMaxImages(+e.target.value)} />
-              <span className="slider-val">{maxImages}</span>
+            <div className="mini-control">
+              <label className="field">Images per style — {maxImages}</label>
+              <div className="slider-row">
+                <input type="range" min={1} max={5} value={maxImages}
+                  onChange={(e) => setMaxImages(+e.target.value)} />
+                <span className="slider-val">{maxImages}</span>
+              </div>
+              <small className="dim">Image links sent per style code. More angles can help, but cost more input tokens.</small>
             </div>
-            <small className="dim">Image links sent per style code. More angles can help, but cost more input tokens.</small>
-          </div>
-          <div className="col">
-            <label className="field">Max requests / min — {rpm === 0 ? "unlimited" : rpm}</label>
-            <div className="slider-row">
-              <input type="range" min={0} max={60} value={rpm}
-                onChange={(e) => setRpm(+e.target.value)} />
-              <span className="slider-val">{rpm === 0 ? "∞" : rpm}</span>
+            <div className="mini-control">
+              <label className="field">Max requests / min — {rpm === 0 ? "unlimited" : rpm}</label>
+              <div className="slider-row">
+                <input type="range" min={0} max={60} value={rpm}
+                  onChange={(e) => setRpm(+e.target.value)} />
+                <span className="slider-val">{rpm === 0 ? "∞" : rpm}</span>
+              </div>
+              <small className="dim">Free-tier Flash allows ~10/min. Keep at 10 on a free key; raise it (or set ∞) once billing is enabled.</small>
             </div>
-            <small className="dim">Free-tier Flash allows ~10/min. Keep at 10 on a free key; raise it (or set ∞) once billing is enabled.</small>
           </div>
         </div>
 
