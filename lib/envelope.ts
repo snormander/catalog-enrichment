@@ -26,6 +26,7 @@ export interface EnvCol {
   fill: EnvFill;
   from?: string;      // concept (for seller) or copy-key (for copy)
   value?: string;     // for const
+  dflt?: string;      // fallback when a seller-sourced value is blank
 }
 
 export const ENVELOPE: EnvCol[] = [
@@ -56,7 +57,7 @@ export const ENVELOPE: EnvCol[] = [
   { key: "productLength",        name: "PRODUCT LENGTH [cm]",      type: "Decimal", mandatory: false, limit: 10,  fill: "seller", from: "product length cm" },
   { key: "productWidth",         name: "PRODUCT WIDTH [cm]",       type: "Decimal", mandatory: false, limit: 10,  fill: "seller", from: "product width cm" },
   { key: "productHeight",        name: "PRODUCT HEIGHT [cm]",      type: "Decimal", mandatory: false, limit: 10,  fill: "seller", from: "product height cm" },
-  { key: "productWeight",        name: "PRODUCT WEIGHT [gm]",      type: "Decimal", mandatory: true,  limit: 10,  fill: "seller", from: "product weight gm" },
+  { key: "productWeight",        name: "PRODUCT WEIGHT [gm]",      type: "Decimal", mandatory: true,  limit: 10,  fill: "seller", from: "product weight gm", dflt: "250" },
 ];
 
 const today = () => {

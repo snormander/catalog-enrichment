@@ -66,7 +66,16 @@ export interface GenReport {
   byL4: Record<string, number>;
 }
 
-const nname = (s: string) => normalizeHeader(s);
+// Space-form concept key — MUST match how concepts and L4 keys were generated
+// in l4_attributes.json (lowercase, "(Refer LOV List)" dropped, every run of
+// non-alphanumerics collapsed to a single space). normalizeHeader strips spaces
+// entirely, which would break multi-word concept/L4 matching, so we don't use it here.
+const nname = (s: string) =>
+  String(s || "")
+    .toLowerCase()
+    .replace(/\(refer lov list\)/ig, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 
 // Build a concept → seller column index for one table (display name + code).
 function sellerConceptIndex(table: NormalizedTable) {

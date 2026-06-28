@@ -38,7 +38,7 @@ function attrLimit(code: string): number {
 function envValue(col: EnvCol, r: GenRow): string {
   switch (col.fill) {
     case "const": return col.value || "";
-    case "seller": return r.envelope[col.key] || "";
+    case "seller": return (r.envelope[col.key] || "").trim() || (col.dflt ?? "");
     case "copy": return r.fields[col.from || ""]?.value || "";
     case "image": return r.imageUrls[0] || "";
     case "imgPrio": return r.imageUrls.length ? "1" : "";
